@@ -53,6 +53,32 @@ const DEFAULT_THEME = {
 // Active theme configuration (mutable)
 let THEME = JSON.parse(JSON.stringify(DEFAULT_THEME));
 
+// Syntax highlighting CSS (VS Code Dark+ theme colors)
+const SYNTAX_HIGHLIGHT_CSS = `
+    .hljs-keyword { color: #569cd6; }
+    .hljs-built_in { color: #4ec9b0; }
+    .hljs-type { color: #4ec9b0; }
+    .hljs-literal { color: #569cd6; }
+    .hljs-number { color: #b5cea8; }
+    .hljs-string { color: #ce9178; }
+    .hljs-comment { color: #6a9955; }
+    .hljs-function { color: #dcdcaa; }
+    .hljs-class { color: #4ec9b0; }
+    .hljs-variable { color: #9cdcfe; }
+    .hljs-attr { color: #9cdcfe; }
+    .hljs-property { color: #9cdcfe; }
+    .hljs-punctuation { color: #d4d4d4; }
+    .hljs-operator { color: #d4d4d4; }
+    .hljs-tag { color: #569cd6; }
+    .hljs-name { color: #569cd6; }
+    .hljs-attribute { color: #9cdcfe; }
+    .hljs-title { color: #dcdcaa; }
+    .hljs-params { color: #9cdcfe; }
+    .hljs-meta { color: #569cd6; }
+    .hljs-selector-tag { color: #d7ba7d; }
+    .hljs-selector-class { color: #d7ba7d; }
+    .hljs-selector-id { color: #d7ba7d; }`;
+
 // Legacy aliases for backwards compatibility (computed from THEME)
 let COLORS = {};
 let FONTS = {};
@@ -420,14 +446,7 @@ function generateCardsSlide(slide) {
       font-size: 11px;
       line-height: 1.4;
       color: #d4d4d4;
-    }
-    .hljs-keyword { color: #569cd6; }
-    .hljs-built_in { color: #4ec9b0; }
-    .hljs-string { color: #ce9178; }
-    .hljs-comment { color: #6a9955; }
-    .hljs-function { color: #dcdcaa; }
-    .hljs-number { color: #b5cea8; }
-    .hljs-variable { color: #9cdcfe; }` : '';
+    }${SYNTAX_HIGHLIGHT_CSS}` : '';
 
   const variantStyles = hasVariants ? `
     .card-good {
@@ -818,31 +837,7 @@ function generateCodeSlide(slide) {
       font-size: 14px;
       line-height: 1.5;
       color: #d4d4d4;
-    }
-    /* Syntax highlighting colors */
-    .hljs-keyword { color: #569cd6; }
-    .hljs-built_in { color: #4ec9b0; }
-    .hljs-type { color: #4ec9b0; }
-    .hljs-literal { color: #569cd6; }
-    .hljs-number { color: #b5cea8; }
-    .hljs-string { color: #ce9178; }
-    .hljs-comment { color: #6a9955; }
-    .hljs-function { color: #dcdcaa; }
-    .hljs-class { color: #4ec9b0; }
-    .hljs-variable { color: #9cdcfe; }
-    .hljs-attr { color: #9cdcfe; }
-    .hljs-property { color: #9cdcfe; }
-    .hljs-punctuation { color: #d4d4d4; }
-    .hljs-operator { color: #d4d4d4; }
-    .hljs-tag { color: #569cd6; }
-    .hljs-name { color: #569cd6; }
-    .hljs-attribute { color: #9cdcfe; }
-    .hljs-title { color: #dcdcaa; }
-    .hljs-params { color: #9cdcfe; }
-    .hljs-meta { color: #569cd6; }
-    .hljs-selector-tag { color: #d7ba7d; }
-    .hljs-selector-class { color: #d7ba7d; }
-    .hljs-selector-id { color: #d7ba7d; }`;
+    }${SYNTAX_HIGHLIGHT_CSS}`;
 
   const section = slide.section ? `    <p class="section-num">${escapeHtml(slide.section)}</p>\n` : '';
   const title = slide.title || slide.name;
@@ -1223,7 +1218,7 @@ function generateCompositeGrid(slide, items, rows, cols) {
       font-size: ${codeFontSize}px;
       line-height: 1.4;
       color: #d4d4d4;
-    }
+    }${SYNTAX_HIGHLIGHT_CSS}
     .grid-cell-multi-cards {
       display: flex;
       flex-direction: column;
@@ -1521,10 +1516,18 @@ ${itemsHtml}
     ? cellsHtml + '\n' + Array(totalCells - expandedItems.length).fill('      <div class="grid-cell"></div>').join('\n')
     : cellsHtml;
 
+  // Check if any code blocks exist (check both original items and expanded items)
+  const hasCodeBlock = items.some(item => item.type === 'code' && item.codeBlock) ||
+    expandedItems.some(item => item.type === 'code' && item.codeBlock);
+
+  const hljsScript = hasCodeBlock ? `
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"><\/script>
+    <script>hljs.highlightAll();<\/script>` : '';
+
   const body = `${section}    <h1>${escapeHtml(title)}</h1>
     <div class="grid-container">
 ${filledCells}
-    </div>`;
+    </div>${hljsScript}`;
 
   return wrapWithBase(style, body);
 }
