@@ -1,8 +1,7 @@
 # Dependencies
 node_modules/
 
-# Generated folders
-1_mds/
+# Generated folders (keep 1_mds for sample)
 2_htmls/
 3_pptxs/
 

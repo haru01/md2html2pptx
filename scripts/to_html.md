@@ -30,4 +30,4 @@ npm run to_html -- 1_mds/sample.md --dry-run
 
 ## Markdown記法
 
-
+[README.md](../README.md) の「Markdown記法」セクションを参照。

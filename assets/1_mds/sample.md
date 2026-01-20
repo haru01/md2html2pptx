@@ -4,9 +4,7 @@
 
 ---
 
-## タイトル
-- PART 1
-- md2html2pptx
+## PART 1: md2html2pptx
 - 副題: Markdownからスライドを作成
 
 ## 1.1: md2html2pptxとは

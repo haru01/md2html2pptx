@@ -70,7 +70,7 @@ npx playwright install chromium
 `/md2html2pptx setup` を実行すると以下を行う:
 
 1. フォルダ作成: `mkdir -p 1_mds 2_htmls 3_pptxs`
-2. サンプルファイルをコピー: `cp <skill-path>/assets/sample.md 1_mds/sample.md`
+2. サンプルファイルをコピー: `cp <skill-path>/assets/1_mds/sample.md 1_mds/sample.md`
 3. package.json生成（既存の場合は依存関係を追加）
 4. `npm install` 実行
 5. `npx playwright install chromium` 実行
@@ -126,7 +126,6 @@ Returns slide object and placeholder positions for PptxGenJS charts/tables.
 - **Text wrapping**: All text must be in `<p>`, `<h1>`-`<h6>`, `<ul>`, `<ol>`
 - **No bullets in p**: Never start `<p>` with `-`, `•`, `*`
 - **Flex widths**: Use fixed width (e.g., `width: 380px`) for flex children
-- **Colors**: PptxGenJS requires no `#` prefix (use `6366F1` not `#6366F1`)
 
 ## Troubleshooting
 

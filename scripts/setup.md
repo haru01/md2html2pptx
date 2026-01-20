@@ -24,7 +24,7 @@ mkdir -p 1_mds 2_htmls 3_pptxs
 `1_mds/` にサンプルMarkdownをコピー（存在しない場合のみ）:
 
 ```bash
-cp <skill-path>/assets/sample.md 1_mds/sample.md
+cp <skill-path>/assets/1_mds/sample.md 1_mds/sample.md
 ```
 
 ### 3. package.json生成
