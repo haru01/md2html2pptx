@@ -29,14 +29,32 @@ const COLORS = {
 /**
  * Wrap HTML content with base template
  */
-function wrapWithBase(styleContent, bodyContent) {
+function wrapWithBase(styleContent, bodyContent, bodyBackground = null) {
+  // Extract background from styleContent if not explicitly provided
+  let bgStyle = '';
+  let modifiedStyleContent = styleContent;
+
+  if (bodyBackground) {
+    bgStyle = bodyBackground;
+  } else {
+    // Look for .slide background in styleContent and move it to body
+    const bgMatch = styleContent.match(/\.slide\s*\{[^}]*background:\s*([^;]+);/);
+    if (bgMatch) {
+      bgStyle = bgMatch[1].trim();
+      // Remove background from .slide in styleContent
+      modifiedStyleContent = styleContent.replace(/(\.slide\s*\{[^}]*)background:\s*[^;]+;/, '$1');
+    }
+  }
+
+  const bodyStyle = bgStyle ? `body { margin: 0; width: 960px; height: 540px; background: ${bgStyle}; }` : 'body { margin: 0; width: 960px; height: 540px; }';
+
   return `<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="theme.css">
   <style>
-    body { margin: 0; }
+    ${bodyStyle}
     .slide {
       width: 960px;
       height: 540px;
@@ -47,7 +65,7 @@ function wrapWithBase(styleContent, bodyContent) {
     * {
       box-sizing: border-box;
     }
-${styleContent}
+${modifiedStyleContent}
   </style>
 </head>
 <body>
@@ -947,14 +965,15 @@ function generateCompositeGrid(slide, items, rows, cols) {
     return max;
   }, 1);
   // Scale down if many cards per cell or large grid
-  const densityFactor = maxCardsInCell > 1 ? maxCardsInCell : 0;
+  // For 2x2 grid, use milder scaling to keep text readable
+  const densityFactor = maxCardsInCell > 1 ? Math.min(maxCardsInCell, 2) : 0;
   const gridFactor = gridSize <= 2 ? 0 : gridSize - 2;
   const scaleFactor = Math.max(densityFactor, gridFactor);
   const gap = Math.max(4, 16 - scaleFactor * 2);
   const padding = Math.max(6, 16 - scaleFactor * 2);
-  const titleFontSize = Math.max(12, 24 - scaleFactor * 4); // 24px = 18pt in PPTX
-  const itemFontSize = Math.max(12, 24 - scaleFactor * 4);  // 24px = 18pt in PPTX
-  const codeFontSize = Math.max(10, Math.round(itemFontSize * 0.7)); // smaller font for code
+  const titleFontSize = Math.max(14, 24 - scaleFactor * 3); // 24px = 18pt in PPTX, min 14px for readability
+  const itemFontSize = Math.max(14, 24 - scaleFactor * 3);  // 24px = 18pt in PPTX, min 14px for readability
+  const codeFontSize = Math.max(11, Math.round(itemFontSize * 0.75)); // smaller font for code
   const borderRadius = Math.max(4, 12 - scaleFactor);
   const headerMargin = Math.max(2, 10 - scaleFactor);
 
