@@ -345,12 +345,20 @@ function generateIndexHtml(slides) {
 
     totalPagesEl.textContent = slides.length;
 
-    function loadSlide(index) {
+    function loadSlide(index, updateHash = true) {
       currentIndex = index;
       slideFrame.src = slides[index];
       currentPageEl.textContent = index + 1;
       prevBtn.disabled = index === 0;
       nextBtn.disabled = index === slides.length - 1;
+
+      // Update URL hash (1-based page number for user-friendliness)
+      if (updateHash) {
+        const newHash = '#' + (index + 1);
+        if (window.location.hash !== newHash) {
+          history.pushState(null, '', newHash);
+        }
+      }
 
       // Reset validation status
       validationStatus.className = 'validation-status';
@@ -670,7 +678,29 @@ function generateIndexHtml(slides) {
 
     window.addEventListener('resize', updateScale);
 
-    loadSlide(0);
+    // Handle browser back/forward navigation
+    window.addEventListener('hashchange', () => {
+      const pageFromHash = getPageFromHash();
+      if (pageFromHash !== currentIndex) {
+        loadSlide(pageFromHash, false);
+      }
+    });
+
+    // Get initial page from URL hash
+    function getPageFromHash() {
+      const hash = window.location.hash;
+      if (hash && hash.length > 1) {
+        const pageNum = parseInt(hash.substring(1), 10);
+        if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= slides.length) {
+          return pageNum - 1; // Convert to 0-based index
+        }
+      }
+      return 0;
+    }
+
+    // Load initial slide from hash or default to first slide
+    const initialPage = getPageFromHash();
+    loadSlide(initialPage);
     updateScale();
 
     // フォーカスをドキュメントに設定してキーボードナビゲーションを有効化
