@@ -172,3 +172,26 @@ export function hasPattern(xml, pattern) {
   }
   return pattern.test(xml);
 }
+
+/**
+ * PPTX ファイルから画像ファイルの数をカウント
+ * @param {string} pptxPath - PPTX ファイルパス
+ * @returns {Promise<number>} 画像ファイル数
+ */
+export async function countImages(pptxPath) {
+  const buffer = fs.readFileSync(pptxPath);
+  const zip = await JSZip.loadAsync(buffer);
+  const imageFiles = Object.keys(zip.files).filter(name =>
+    name.startsWith('ppt/media/') && /\.(png|jpg|jpeg|gif|svg)$/i.test(name)
+  );
+  return imageFiles.length;
+}
+
+/**
+ * XML から画像参照（p:pic要素）の数をカウント
+ * @param {string} xml - XML 文字列
+ * @returns {number} 画像参照数
+ */
+export function countPicElements(xml) {
+  return (xml.match(/<p:pic>/g) || []).length;
+}

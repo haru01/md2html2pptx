@@ -16,7 +16,9 @@ import {
   getSlideXml,
   extractTexts,
   countShapes,
-  hasPattern
+  hasPattern,
+  countImages,
+  countPicElements
 } from './helpers/pptx-utils.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -1499,6 +1501,181 @@ describe('MD → PPTX 統合テスト', () => {
     test('複数の図形が存在する（4カード + タイトル）', () => {
       const shapeCount = countShapes(slideXml);
       expect(shapeCount).toBeGreaterThanOrEqual(5);
+    });
+  });
+
+  describe('Mermaidスライド', () => {
+    /**
+     * Mermaidスライド仕様:
+     * - Mermaid コードブロックを図解としてレンダリング
+     * - SVGをラスタライズして画像として埋め込み
+     * - 生のMermaidテキストはPPTXに含まれない
+     */
+    let pptxPath;
+    let slideXml;
+
+    beforeAll(async () => {
+      setupTmpDir();
+      const md = fs.readFileSync(
+        path.join(FIXTURES_DIR, 'mermaid-slide.md'),
+        'utf-8'
+      );
+      pptxPath = await mdToPptx(md, 'mermaid');
+      slideXml = await getSlideXml(pptxPath, 1);
+    }, 120000);
+
+    test('PPTX ファイルが生成される', () => {
+      expect(fs.existsSync(pptxPath)).toBe(true);
+    });
+
+    test('ファイルサイズが妥当', () => {
+      const stats = fs.statSync(pptxPath);
+      expect(stats.size).toBeGreaterThan(10000);
+    });
+
+    test('セクション番号が含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('3.1'))).toBe(true);
+    });
+
+    test('タイトルが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('シーケンス図'))).toBe(true);
+    });
+
+    test('Mermaid図が画像として埋め込まれる', async () => {
+      const imageCount = await countImages(pptxPath);
+      expect(imageCount).toBeGreaterThanOrEqual(1);
+    });
+
+    test('スライドに画像参照が含まれる', () => {
+      const picCount = countPicElements(slideXml);
+      expect(picCount).toBeGreaterThanOrEqual(1);
+    });
+
+    test('生のMermaidシンタックスが含まれない', () => {
+      const texts = extractTexts(slideXml);
+      // Mermaidの生テキストが含まれないことを確認
+      expect(texts.some(t => t.includes('sequenceDiagram'))).toBe(false);
+      expect(texts.some(t => t.includes('participant'))).toBe(false);
+      expect(texts.some(t => t.includes('->>'))).toBe(false);
+    });
+  });
+
+  describe('複合スライド（リスト + Mermaid）', () => {
+    /**
+     * 複合スライド仕様:
+     * - 複合: 1:2 で左にリスト、右にMermaid
+     * - Mermaidは図解としてレンダリング
+     */
+    let pptxPath;
+    let slideXml;
+
+    beforeAll(async () => {
+      setupTmpDir();
+      const md = fs.readFileSync(
+        path.join(FIXTURES_DIR, 'composite-list-mermaid-slide.md'),
+        'utf-8'
+      );
+      pptxPath = await mdToPptx(md, 'composite-list-mermaid');
+      slideXml = await getSlideXml(pptxPath, 1);
+    }, 120000);
+
+    test('PPTX ファイルが生成される', () => {
+      expect(fs.existsSync(pptxPath)).toBe(true);
+    });
+
+    test('ファイルサイズが妥当', () => {
+      const stats = fs.statSync(pptxPath);
+      expect(stats.size).toBeGreaterThan(10000);
+    });
+
+    test('セクション番号が含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('3.2'))).toBe(true);
+    });
+
+    test('タイトルが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('リストとMermaid'))).toBe(true);
+    });
+
+    test('リスト項目が含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('システム構成の概要'))).toBe(true);
+      expect(texts.some(t => t.includes('各層の役割'))).toBe(true);
+    });
+
+    test('Mermaid図が画像として埋め込まれる', async () => {
+      const imageCount = await countImages(pptxPath);
+      expect(imageCount).toBeGreaterThanOrEqual(1);
+    });
+
+    test('生のMermaidシンタックスが含まれない', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('flowchart'))).toBe(false);
+      expect(texts.some(t => t.includes('-->'))).toBe(false);
+    });
+  });
+
+  describe('複合スライド（カード + Mermaid）', () => {
+    /**
+     * 複合スライド仕様:
+     * - 複合: 1:2 で左にカード、右にMermaid
+     * - Mermaidは図解としてレンダリング
+     */
+    let pptxPath;
+    let slideXml;
+
+    beforeAll(async () => {
+      setupTmpDir();
+      const md = fs.readFileSync(
+        path.join(FIXTURES_DIR, 'composite-card-mermaid-slide.md'),
+        'utf-8'
+      );
+      pptxPath = await mdToPptx(md, 'composite-card-mermaid');
+      slideXml = await getSlideXml(pptxPath, 1);
+    }, 120000);
+
+    test('PPTX ファイルが生成される', () => {
+      expect(fs.existsSync(pptxPath)).toBe(true);
+    });
+
+    test('ファイルサイズが妥当', () => {
+      const stats = fs.statSync(pptxPath);
+      expect(stats.size).toBeGreaterThan(10000);
+    });
+
+    test('セクション番号が含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('3.3'))).toBe(true);
+    });
+
+    test('タイトルが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('カードとMermaid'))).toBe(true);
+    });
+
+    test('カードタイトルが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('アーキテクチャ'))).toBe(true);
+    });
+
+    test('カード項目が含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('マイクロサービス構成'))).toBe(true);
+      expect(texts.some(t => t.includes('各サービスは独立'))).toBe(true);
+    });
+
+    test('Mermaid図が画像として埋め込まれる', async () => {
+      const imageCount = await countImages(pptxPath);
+      expect(imageCount).toBeGreaterThanOrEqual(1);
+    });
+
+    test('生のMermaidシンタックスが含まれない', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('flowchart'))).toBe(false);
+      expect(texts.some(t => t.includes('-->'))).toBe(false);
     });
   });
 });

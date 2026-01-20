@@ -480,6 +480,7 @@ const PATTERNS = {
   composite: /^複合[:：]\s*(.+)$/,
   bulletList: /^(内容|箇条書き|リスト)[:：]?\s*$/,
   code: /^コード[:：]?\s*$/,
+  mermaid: /^[Mm]ermaid[:：]?\s*$/,
   table: /^テーブル[:：]?\s*$/,
   flow: /^フロー[:：]?\s*$/,
   card: /^カード(\d+)[:：]\s*(.+)$/,
@@ -674,6 +675,7 @@ const ELEMENT_TYPE_CREATORS = {
 function matchElementType(content) {
   if (PATTERNS.bulletList.test(content)) return 'bulletList';
   if (PATTERNS.code.test(content)) return 'code';
+  if (PATTERNS.mermaid.test(content)) return 'code'; // Mermaid is treated as code
   if (PATTERNS.table.test(content)) return 'table';
   if (PATTERNS.flow.test(content)) return 'flow';
   return null;

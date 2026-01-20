@@ -555,8 +555,40 @@ var ExtractSlideData = (function(exports) {
 		const placeholders = [];
 		const rasterizeElements = [];
 		const processed = /* @__PURE__ */ new Set();
+		// Helper function to check if element is inside SVG (not the SVG itself)
+		const isInsideSvg = (el) => {
+			let parent = el.parentElement;
+			while (parent) {
+				if (parent.tagName.toUpperCase() === "SVG") return true;
+				parent = parent.parentElement;
+			}
+			return false;
+		};
+		// Helper function to check if element is a mermaid source block (but NOT the rendered SVG)
+		const isMermaidSource = (el) => {
+			// SVG elements are NOT mermaid source - they are the rendered output
+			if (el.tagName.toUpperCase() === "SVG") return false;
+			if (el.tagName.toUpperCase() === "PRE" && el.classList.contains("mermaid")) return true;
+			// Check if parent is a mermaid pre (but not if we're an SVG inside it)
+			let parent = el.parentElement;
+			while (parent) {
+				if (parent.tagName.toUpperCase() === "PRE" && parent.classList.contains("mermaid")) return true;
+				parent = parent.parentElement;
+			}
+			return false;
+		};
 		document.querySelectorAll("*").forEach((el) => {
 			if (processed.has(el)) return;
+			// Skip elements that are children inside SVG (but NOT the SVG element itself)
+			if (isInsideSvg(el)) {
+				processed.add(el);
+				return;
+			}
+			// Skip mermaid source code blocks (they get rendered as SVG)
+			if (isMermaidSource(el)) {
+				processed.add(el);
+				return;
+			}
 			if (el.tagName.toUpperCase() === "SVG" || el.tagName.toUpperCase() === "CANVAS") {
 				const rect$1 = el.getBoundingClientRect();
 				if (rect$1.width > 0 && rect$1.height > 0) {
@@ -574,6 +606,8 @@ var ExtractSlideData = (function(exports) {
 						element: el
 					});
 					processed.add(el);
+					// Mark all descendants as processed to prevent text extraction from SVG/Canvas
+					el.querySelectorAll("*").forEach((child) => processed.add(child));
 					return;
 				}
 			}

@@ -79,6 +79,35 @@ const SYNTAX_HIGHLIGHT_CSS = `
     .hljs-selector-class { color: #d7ba7d; }
     .hljs-selector-id { color: #d7ba7d; }`;
 
+// Mermaid.js CDN script for diagram rendering
+// After rendering, marks SVGs with data-rasterize for html2pptx to convert to images
+const MERMAID_SCRIPT = `
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"><\/script>
+    <script>
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'default',
+        securityLevel: 'loose',
+        flowchart: { curve: 'basis' }
+      });
+      // Run mermaid and mark SVGs for rasterization
+      mermaid.run().then(() => {
+        document.querySelectorAll('.mermaid svg').forEach((svg, i) => {
+          svg.setAttribute('data-rasterize', 'mermaid-' + i);
+        });
+      });
+    <\/script>`;
+
+/**
+ * Check if a code block is Mermaid diagram
+ * @param {Object} codeBlock - Code block with language and code
+ * @returns {boolean}
+ */
+function isMermaidCode(codeBlock) {
+  return codeBlock && codeBlock.language &&
+         codeBlock.language.toLowerCase() === 'mermaid';
+}
+
 // Legacy aliases for backwards compatibility (computed from THEME)
 let COLORS = {};
 let FONTS = {};
@@ -821,10 +850,62 @@ ${flowHtml}
 }
 
 /**
- * Generate Code Slide with syntax highlighting
+ * Generate Mermaid Diagram Slide
  */
+function generateMermaidSlide(slide) {
+  const codeBlock = slide.codeBlock || { language: 'mermaid', code: '' };
+
+  const style = `    .slide {
+      background: ${COLORS.surface};
+      padding: 32px 60px;
+    }
+    .section-num {
+      color: ${COLORS.primary};
+      font-size: 14px;
+      font-weight: 600;
+      margin: 0 0 4px 0;
+    }
+    h1 {
+      color: ${COLORS.text};
+      font-size: 28px;
+      margin: 0 0 16px 0;
+    }
+    .mermaid-container {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: ${COLORS.cardShadow};
+      min-height: 300px;
+    }
+    .mermaid {
+      margin: 0;
+      font-family: inherit;
+    }`;
+
+  const section = slide.section ? `    <p class="section-num">${escapeHtml(slide.section)}</p>\n` : '';
+  const title = slide.title || slide.name;
+
+  // Mermaid code should NOT be escaped - Mermaid.js parses it directly
+  const body = `${section}    <h1>${escapeHtml(title)}</h1>
+    <div class="mermaid-container">
+      <pre class="mermaid">${codeBlock.code}</pre>
+    </div>
+    ${MERMAID_SCRIPT}`;
+
+  return wrapWithBase(style, body);
+}
+
 function generateCodeSlide(slide) {
   const codeBlock = slide.codeBlock || { language: 'plaintext', code: '' };
+
+  // Special handling for Mermaid diagrams
+  if (isMermaidCode(codeBlock)) {
+    return generateMermaidSlide(slide);
+  }
+
   const lang = codeBlock.language;
 
   const style = `    .slide {
@@ -1053,6 +1134,12 @@ function generateCompositeContentHtmlWithDepth(items, depth) {
  */
 function generateCompositeCodeHtmlWithDepth(codeBlock, depth) {
   if (!codeBlock) return '';
+
+  // Special handling for Mermaid diagrams
+  if (isMermaidCode(codeBlock)) {
+    return generateCompositeMermaidHtmlWithDepth(codeBlock, depth);
+  }
+
   const lang = codeBlock.language || 'plaintext';
   const escapedCode = escapeHtml(codeBlock.code);
   const fontSize = Math.round(13 * Math.pow(0.9, depth));
@@ -1060,6 +1147,19 @@ function generateCompositeCodeHtmlWithDepth(codeBlock, depth) {
 
   return `        <div class="code-container" style="padding: ${padding}px; font-size: ${fontSize}px;">
           <pre><code class="language-${escapeHtml(lang)}">${escapedCode}</code></pre>
+        </div>`;
+}
+
+/**
+ * Generate HTML for Mermaid diagram in composite slides
+ * Note: Mermaid code is NOT escaped - Mermaid.js parses it directly
+ */
+function generateCompositeMermaidHtmlWithDepth(codeBlock, depth) {
+  if (!codeBlock) return '';
+  const padding = Math.round(16 * Math.pow(0.9, depth));
+
+  return `        <div class="mermaid-container" style="padding: ${padding}px;">
+          <pre class="mermaid">${codeBlock.code}</pre>
         </div>`;
 }
 
@@ -1251,6 +1351,26 @@ function generateGridCss(s) {
       line-height: 1.4;
       color: #d4d4d4;
     }${SYNTAX_HIGHLIGHT_CSS}
+    .grid-cell-mermaid {
+      background: white;
+      border-radius: ${s.borderRadius}px;
+      box-shadow: ${COLORS.cardShadow};
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .grid-cell-mermaid .mermaid-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: ${Math.max(8, s.padding)}px;
+    }
+    .grid-cell-mermaid .mermaid {
+      margin: 0;
+      font-family: inherit;
+    }
     .grid-cell-multi-cards {
       display: flex;
       flex-direction: column;
@@ -1545,6 +1665,14 @@ ${itemsHtml}
         </ul>
       </div>`;
     } else if (item.type === 'code' && item.codeBlock) {
+      // Special handling for Mermaid diagrams (NOT escaped)
+      if (isMermaidCode(item.codeBlock)) {
+        return `      <div class="grid-cell grid-cell-mermaid">
+        <div class="mermaid-container">
+          <pre class="mermaid">${item.codeBlock.code}</pre>
+        </div>
+      </div>`;
+      }
       const lang = item.codeBlock.language || 'plaintext';
       const escapedCode = escapeHtml(item.codeBlock.code);
       return `      <div class="grid-cell grid-cell-code">
@@ -1564,17 +1692,23 @@ ${itemsHtml}
     : cellsHtml;
 
   // Check if any code blocks exist (check both original items and expanded items)
-  const hasCodeBlock = items.some(item => item.type === 'code' && item.codeBlock) ||
-    expandedItems.some(item => item.type === 'code' && item.codeBlock);
+  const hasCodeBlock = items.some(item => item.type === 'code' && item.codeBlock && !isMermaidCode(item.codeBlock)) ||
+    expandedItems.some(item => item.type === 'code' && item.codeBlock && !isMermaidCode(item.codeBlock));
+
+  // Check if any Mermaid diagrams exist
+  const hasMermaid = items.some(item => item.type === 'code' && item.codeBlock && isMermaidCode(item.codeBlock)) ||
+    expandedItems.some(item => item.type === 'code' && item.codeBlock && isMermaidCode(item.codeBlock));
 
   const hljsScript = hasCodeBlock ? `
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"><\/script>
     <script>hljs.highlightAll();<\/script>` : '';
 
+  const mermaidScript = hasMermaid ? MERMAID_SCRIPT : '';
+
   const body = `${section}    <h1>${escapeHtml(title)}</h1>
     <div class="grid-container">
 ${filledCells}
-    </div>${hljsScript}`;
+    </div>${hljsScript}${mermaidScript}`;
 
   return wrapWithBase(style, body);
 }

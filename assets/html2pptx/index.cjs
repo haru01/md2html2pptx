@@ -32,6 +32,7 @@ let sharp = require("sharp");
 sharp = __toESM(sharp);
 let fs_promises = require("fs/promises");
 let node_url = require("node:url");
+let http = require("http");
 
 //#region src/constants.ts
 /**
@@ -703,13 +704,61 @@ async function html2pptx(htmlFile, pres, options = {}) {
 		let bodyDimensions;
 		let slideData;
 		const filePath = path.default.isAbsolute(htmlFile) ? htmlFile : path.default.join(process.cwd(), htmlFile);
+		const fileDir = path.default.dirname(filePath);
 		const validationErrors = [];
+
+		// Create a simple HTTP server to serve the HTML file (needed for CDN scripts like Mermaid.js)
+		const server = http.createServer((req, res) => {
+			let requestedPath = req.url === '/' ? filePath : path.default.join(fileDir, req.url);
+			// Handle query strings
+			requestedPath = requestedPath.split('?')[0];
+
+			const ext = path.default.extname(requestedPath).toLowerCase();
+			const mimeTypes = {
+				'.html': 'text/html',
+				'.css': 'text/css',
+				'.js': 'application/javascript',
+				'.png': 'image/png',
+				'.jpg': 'image/jpeg',
+				'.jpeg': 'image/jpeg',
+				'.gif': 'image/gif',
+				'.svg': 'image/svg+xml',
+				'.json': 'application/json'
+			};
+
+			(0, node_fs.readFile)(requestedPath, (err, data) => {
+				if (err) {
+					res.writeHead(404);
+					res.end('Not found');
+					return;
+				}
+				res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'application/octet-stream' });
+				res.end(data);
+			});
+		});
+
+		// Find an available port
+		await new Promise((resolve) => {
+			server.listen(0, '127.0.0.1', () => resolve());
+		});
+		const serverPort = server.address().port;
+		const serverUrl = `http://127.0.0.1:${serverPort}/`;
+
 		try {
 			const page = await browser.newPage({ deviceScaleFactor: 3 });
 			page.on("console", (msg) => {
 				console.log(`Browser console: ${msg.text()}`);
 			});
-			await page.goto(`file://${filePath}`);
+			await page.goto(serverUrl, { waitUntil: 'networkidle' });
+			// Wait for Mermaid diagrams to render if present
+			await page.waitForFunction(() => {
+				const mermaidElements = document.querySelectorAll('.mermaid');
+				if (mermaidElements.length === 0) return true;
+				// Check if all mermaid elements have been converted to SVG
+				return Array.from(mermaidElements).every(el => el.querySelector('svg') !== null);
+			}, { timeout: 10000 }).catch(() => {
+				// Mermaid may not be present or may have failed, continue anyway
+			});
 			await preparePage(page);
 			bodyDimensions = await getBodyDimensions(page);
 			await maybePauseToDebug(page, bodyDimensions.errors);
@@ -717,6 +766,7 @@ async function html2pptx(htmlFile, pres, options = {}) {
 			await maybePauseToDebug(page, slideData.errors);
 		} finally {
 			await browser.close();
+			server.close();
 		}
 		if (bodyDimensions.errors && bodyDimensions.errors.length > 0) validationErrors.push(...bodyDimensions.errors);
 		const dimensionErrors = validateDimensions(bodyDimensions, pres);
