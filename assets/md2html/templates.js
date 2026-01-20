@@ -3,51 +3,27 @@
  * Generates html2pptx-compatible HTML slides
  */
 
-// Default color palette
-const DEFAULT_COLORS = {
-  // Title slide
-  titleBackground: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
-  titleText: '#F8FAFC',
-  subtitleText: '#94A3B8',
-  // Primary colors
+// Default theme configuration (new unified structure)
+const DEFAULT_THEME = {
+  fonts: {
+    body: "'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif",
+    code: "'Consolas', 'Monaco', 'Courier New', monospace"
+  },
   primary: '#0891B2',
-  accent: '#22D3EE',
-  // Text colors
-  text: '#0F172A',
-  muted: '#64748B',
-  // Background colors
-  surface: '#F8FAFC',
-  white: '#FFFFFF',
-  border: '#E2E8F0',
-  headerBg: '#F1F5F9',
-  cardShadow: '0 2px 8px rgba(0,0,0,0.08)',
-  // Good/Bad colors
-  good: '#d4edda',
-  goodBackground: '#d4edda',
-  goodForeground: '#155724',
-  goodBorder: '#28a745',
-  bad: '#f8d7da',
-  badBackground: '#f8d7da',
-  badForeground: '#721c24',
-  badBorder: '#dc3545',
-  // Legacy alias (for backwards compatibility)
-  darkBg: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)'
-};
-
-// Default font settings
-const DEFAULT_FONTS = {
-  body: "'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif",
-  code: "'Consolas', 'Monaco', 'Courier New', monospace"
-};
-
-// Default typography settings
-const DEFAULT_TYPOGRAPHY = {
   titleSlide: {
+    background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+    titleColor: '#F8FAFC',
     titleSize: 42,
-    subtitleSize: 18
+    subtitleColor: '#94A3B8',
+    subtitleSize: 18,
+    accentColor: '#22D3EE'
   },
   contentSlide: {
+    background: '#F8FAFC',
+    titleColor: '#0F172A',
     titleSize: 28,
+    textColor: '#0F172A',
+    mutedColor: '#64748B',
     listSize: 20,
     subListSize: 18,
     subSubListSize: 16
@@ -55,56 +31,122 @@ const DEFAULT_TYPOGRAPHY = {
   codeSlide: {
     titleSize: 28,
     codeSize: 14
+  },
+  card: {
+    background: '#FFFFFF',
+    shadow: '0 2px 8px rgba(0,0,0,0.08)',
+    border: '#E2E8F0',
+    headerBg: '#F1F5F9'
+  },
+  good: {
+    background: '#d4edda',
+    foreground: '#155724',
+    border: '#28a745'
+  },
+  bad: {
+    background: '#f8d7da',
+    foreground: '#721c24',
+    border: '#dc3545'
   }
 };
 
 // Active theme configuration (mutable)
-let COLORS = { ...DEFAULT_COLORS };
-let FONTS = { ...DEFAULT_FONTS };
-let TYPOGRAPHY = { ...DEFAULT_TYPOGRAPHY };
+let THEME = JSON.parse(JSON.stringify(DEFAULT_THEME));
+
+// Legacy aliases for backwards compatibility (computed from THEME)
+let COLORS = {};
+let FONTS = {};
+let TYPOGRAPHY = {};
+
+// Update legacy aliases from THEME
+function updateLegacyAliases() {
+  FONTS = { ...THEME.fonts };
+  COLORS = {
+    // Title slide
+    titleBackground: THEME.titleSlide.background,
+    titleText: THEME.titleSlide.titleColor,
+    subtitleText: THEME.titleSlide.subtitleColor,
+    // Primary colors
+    primary: THEME.primary,
+    accent: THEME.titleSlide.accentColor,
+    // Text colors
+    text: THEME.contentSlide.textColor,
+    muted: THEME.contentSlide.mutedColor,
+    // Background colors
+    surface: THEME.contentSlide.background,
+    white: THEME.card.background,
+    border: THEME.card.border,
+    headerBg: THEME.card.headerBg,
+    cardShadow: THEME.card.shadow,
+    // Good/Bad colors
+    good: THEME.good.background,
+    goodBackground: THEME.good.background,
+    goodForeground: THEME.good.foreground,
+    goodBorder: THEME.good.border,
+    bad: THEME.bad.background,
+    badBackground: THEME.bad.background,
+    badForeground: THEME.bad.foreground,
+    badBorder: THEME.bad.border,
+    // Legacy alias
+    darkBg: THEME.titleSlide.background
+  };
+  TYPOGRAPHY = {
+    titleSlide: {
+      titleSize: THEME.titleSlide.titleSize,
+      subtitleSize: THEME.titleSlide.subtitleSize
+    },
+    contentSlide: {
+      titleSize: THEME.contentSlide.titleSize,
+      listSize: THEME.contentSlide.listSize,
+      subListSize: THEME.contentSlide.subListSize,
+      subSubListSize: THEME.contentSlide.subSubListSize
+    },
+    codeSlide: {
+      titleSize: THEME.codeSlide.titleSize,
+      codeSize: THEME.codeSlide.codeSize
+    }
+  };
+}
+
+// Initialize legacy aliases
+updateLegacyAliases();
 
 /**
  * Set theme configuration from external JSON
+ * Supports new unified structure (titleSlide, contentSlide, etc.)
  */
 function setThemeConfig(config) {
-  if (config.colors) {
-    // Merge colors
-    COLORS = { ...DEFAULT_COLORS };
-    for (const [key, value] of Object.entries(config.colors)) {
-      if (typeof value === 'object' && value !== null) {
-        // Handle nested objects like good/bad
-        if (key === 'good') {
-          COLORS.good = value.background || DEFAULT_COLORS.good;
-          COLORS.goodBackground = value.background || DEFAULT_COLORS.goodBackground;
-          COLORS.goodForeground = value.foreground || DEFAULT_COLORS.goodForeground;
-          COLORS.goodBorder = value.border || DEFAULT_COLORS.goodBorder;
-        } else if (key === 'bad') {
-          COLORS.bad = value.background || DEFAULT_COLORS.bad;
-          COLORS.badBackground = value.background || DEFAULT_COLORS.badBackground;
-          COLORS.badForeground = value.foreground || DEFAULT_COLORS.badForeground;
-          COLORS.badBorder = value.border || DEFAULT_COLORS.badBorder;
-        }
-      } else {
-        COLORS[key] = value;
-        // Handle titleBackground -> darkBg alias
-        if (key === 'titleBackground') {
-          COLORS.darkBg = value;
-        }
-      }
-    }
-  }
-  if (config.typography) {
-    // Deep merge typography
-    TYPOGRAPHY = JSON.parse(JSON.stringify(DEFAULT_TYPOGRAPHY));
-    for (const [category, settings] of Object.entries(config.typography)) {
-      if (TYPOGRAPHY[category]) {
-        TYPOGRAPHY[category] = { ...TYPOGRAPHY[category], ...settings };
-      }
-    }
-  }
+  // Deep merge config into THEME
+  THEME = JSON.parse(JSON.stringify(DEFAULT_THEME));
+
+  // Handle new unified structure
   if (config.fonts) {
-    FONTS = { ...DEFAULT_FONTS, ...config.fonts };
+    THEME.fonts = { ...THEME.fonts, ...config.fonts };
   }
+  if (config.primary) {
+    THEME.primary = config.primary;
+  }
+  if (config.titleSlide) {
+    THEME.titleSlide = { ...THEME.titleSlide, ...config.titleSlide };
+  }
+  if (config.contentSlide) {
+    THEME.contentSlide = { ...THEME.contentSlide, ...config.contentSlide };
+  }
+  if (config.codeSlide) {
+    THEME.codeSlide = { ...THEME.codeSlide, ...config.codeSlide };
+  }
+  if (config.card) {
+    THEME.card = { ...THEME.card, ...config.card };
+  }
+  if (config.good) {
+    THEME.good = { ...THEME.good, ...config.good };
+  }
+  if (config.bad) {
+    THEME.bad = { ...THEME.bad, ...config.bad };
+  }
+
+  // Update legacy aliases for backwards compatibility
+  updateLegacyAliases();
 }
 
 /**
@@ -1642,4 +1684,4 @@ function escapeHtml(text) {
     .replace(/'/g, '&#039;');
 }
 
-module.exports = { generateSlideHtml, setThemeConfig, COLORS, TYPOGRAPHY };
+module.exports = { generateSlideHtml, setThemeConfig, THEME, COLORS, FONTS, TYPOGRAPHY };
