@@ -788,12 +788,15 @@ var ExtractSlideData = (function(exports) {
 
 							if (indentLevel === 0) {
 								// Top level: add colored checkmark as separate text run, then content
+								// Get primary color from CSS variable or use default
+								const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-primary').trim() || '#0891B2';
+								const checkmarkColor = primaryColor.replace('#', '');
 								items.push({
 									text: '✓ ',
 									options: {
 										fontSize: pxToPoints(liComputed.fontSize),
 										fontFace: liComputed.fontFamily.split(",")[0].replace(/['"]/g, "").trim(),
-										color: '0891B2',
+										color: checkmarkColor,
 										bullet: false,
 										breakLine: false
 									}

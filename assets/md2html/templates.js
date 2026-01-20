@@ -3,18 +3,24 @@
  * Generates html2pptx-compatible HTML slides
  */
 
-// Color palette
-const COLORS = {
+// Default color palette
+const DEFAULT_COLORS = {
+  // Title slide
+  titleBackground: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+  titleText: '#F8FAFC',
+  subtitleText: '#94A3B8',
+  // Primary colors
   primary: '#0891B2',
   accent: '#22D3EE',
-  surface: '#F8FAFC',
+  // Text colors
   text: '#0F172A',
   muted: '#64748B',
+  // Background colors
+  surface: '#F8FAFC',
   white: '#FFFFFF',
-  darkBg: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
-  cardShadow: '0 2px 8px rgba(0,0,0,0.08)',
   border: '#E2E8F0',
   headerBg: '#F1F5F9',
+  cardShadow: '0 2px 8px rgba(0,0,0,0.08)',
   // Good/Bad colors
   good: '#d4edda',
   goodBackground: '#d4edda',
@@ -23,8 +29,83 @@ const COLORS = {
   bad: '#f8d7da',
   badBackground: '#f8d7da',
   badForeground: '#721c24',
-  badBorder: '#dc3545'
+  badBorder: '#dc3545',
+  // Legacy alias (for backwards compatibility)
+  darkBg: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)'
 };
+
+// Default font settings
+const DEFAULT_FONTS = {
+  body: "'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif",
+  code: "'Consolas', 'Monaco', 'Courier New', monospace"
+};
+
+// Default typography settings
+const DEFAULT_TYPOGRAPHY = {
+  titleSlide: {
+    titleSize: 42,
+    subtitleSize: 18
+  },
+  contentSlide: {
+    titleSize: 28,
+    listSize: 20,
+    subListSize: 18,
+    subSubListSize: 16
+  },
+  codeSlide: {
+    titleSize: 28,
+    codeSize: 14
+  }
+};
+
+// Active theme configuration (mutable)
+let COLORS = { ...DEFAULT_COLORS };
+let FONTS = { ...DEFAULT_FONTS };
+let TYPOGRAPHY = { ...DEFAULT_TYPOGRAPHY };
+
+/**
+ * Set theme configuration from external JSON
+ */
+function setThemeConfig(config) {
+  if (config.colors) {
+    // Merge colors
+    COLORS = { ...DEFAULT_COLORS };
+    for (const [key, value] of Object.entries(config.colors)) {
+      if (typeof value === 'object' && value !== null) {
+        // Handle nested objects like good/bad
+        if (key === 'good') {
+          COLORS.good = value.background || DEFAULT_COLORS.good;
+          COLORS.goodBackground = value.background || DEFAULT_COLORS.goodBackground;
+          COLORS.goodForeground = value.foreground || DEFAULT_COLORS.goodForeground;
+          COLORS.goodBorder = value.border || DEFAULT_COLORS.goodBorder;
+        } else if (key === 'bad') {
+          COLORS.bad = value.background || DEFAULT_COLORS.bad;
+          COLORS.badBackground = value.background || DEFAULT_COLORS.badBackground;
+          COLORS.badForeground = value.foreground || DEFAULT_COLORS.badForeground;
+          COLORS.badBorder = value.border || DEFAULT_COLORS.badBorder;
+        }
+      } else {
+        COLORS[key] = value;
+        // Handle titleBackground -> darkBg alias
+        if (key === 'titleBackground') {
+          COLORS.darkBg = value;
+        }
+      }
+    }
+  }
+  if (config.typography) {
+    // Deep merge typography
+    TYPOGRAPHY = JSON.parse(JSON.stringify(DEFAULT_TYPOGRAPHY));
+    for (const [category, settings] of Object.entries(config.typography)) {
+      if (TYPOGRAPHY[category]) {
+        TYPOGRAPHY[category] = { ...TYPOGRAPHY[category], ...settings };
+      }
+    }
+  }
+  if (config.fonts) {
+    FONTS = { ...DEFAULT_FONTS, ...config.fonts };
+  }
+}
 
 /**
  * Wrap HTML content with base template
@@ -46,7 +127,19 @@ function wrapWithBase(styleContent, bodyContent, bodyBackground = null) {
     }
   }
 
-  const bodyStyle = bgStyle ? `body { margin: 0; width: 960px; height: 540px; background: ${bgStyle}; }` : 'body { margin: 0; width: 960px; height: 540px; }';
+  const bodyStyle = bgStyle
+    ? `body { margin: 0; width: 960px; height: 540px; background: ${bgStyle}; font-family: ${FONTS.body}; }`
+    : `body { margin: 0; width: 960px; height: 540px; font-family: ${FONTS.body}; }`;
+
+  // CSS custom properties for theme colors and fonts
+  const cssVars = `:root {
+      --theme-primary: ${COLORS.primary};
+      --theme-accent: ${COLORS.accent};
+      --theme-text: ${COLORS.text};
+      --theme-muted: ${COLORS.muted};
+      --font-body: ${FONTS.body};
+      --font-code: ${FONTS.code};
+    }`;
 
   return `<!DOCTYPE html>
 <html lang="ja">
@@ -54,6 +147,7 @@ function wrapWithBase(styleContent, bodyContent, bodyBackground = null) {
   <meta charset="UTF-8">
   <link rel="stylesheet" href="theme.css">
   <style>
+    ${cssVars}
     ${bodyStyle}
     .slide {
       width: 960px;
@@ -81,7 +175,7 @@ ${bodyContent}
  */
 function generateTitleSlide(slide) {
   const style = `    .slide {
-      background: ${COLORS.darkBg};
+      background: ${COLORS.titleBackground || COLORS.darkBg};
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -96,7 +190,7 @@ function generateTitleSlide(slide) {
       margin: 0 0 16px 0;
     }
     h1 {
-      color: ${COLORS.surface};
+      color: ${COLORS.titleText || COLORS.surface};
       font-size: 42px;
       font-weight: 700;
       text-align: center;
@@ -104,7 +198,7 @@ function generateTitleSlide(slide) {
       line-height: 1.3;
     }
     .subtitle {
-      color: #94A3B8;
+      color: ${COLORS.subtitleText};
       font-size: 20px;
       margin: 32px 0 0 0;
       text-align: center;
@@ -270,7 +364,7 @@ function generateCardsSlide(slide) {
       color: #858585;
       font-size: 10px;
       margin: 0 0 8px 0;
-      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-family: ${FONTS.code};
     }
     .card-code pre {
       margin: 0;
@@ -280,7 +374,7 @@ function generateCardsSlide(slide) {
       word-wrap: break-word;
     }
     .card-code code {
-      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-family: ${FONTS.code};
       font-size: 11px;
       line-height: 1.4;
       color: #d4d4d4;
@@ -400,11 +494,11 @@ function generateCardsSlide(slide) {
       margin-bottom: 0;
     }
     .inline-code {
-      background: #f1f5f9;
-      color: #0891b2;
+      background: ${COLORS.headerBg};
+      color: ${COLORS.primary};
       padding: 2px 6px;
       border-radius: 4px;
-      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-family: ${FONTS.code};
       font-size: 12px;
     }${variantStyles}${stepStyles}${codeBlockStyles}`;
 
@@ -670,7 +764,7 @@ function generateCodeSlide(slide) {
       color: #858585;
       font-size: 12px;
       margin: 0 0 12px 0;
-      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-family: ${FONTS.code};
     }
     pre {
       margin: 0;
@@ -678,7 +772,7 @@ function generateCodeSlide(slide) {
       background: transparent;
     }
     code {
-      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-family: ${FONTS.code};
       font-size: 14px;
       line-height: 1.5;
       color: #d4d4d4;
@@ -1083,7 +1177,7 @@ function generateCompositeGrid(slide, items, rows, cols) {
       white-space: pre-wrap;
     }
     .grid-cell-code code {
-      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-family: ${FONTS.code};
       font-size: ${codeFontSize}px;
       line-height: 1.4;
       color: #d4d4d4;
@@ -1122,7 +1216,7 @@ function generateCompositeGrid(slide, items, rows, cols) {
       overflow: hidden;
     }
     .card-code code {
-      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-family: ${FONTS.code};
       font-size: ${Math.max(9, codeFontSize - 1)}px;
       line-height: 1.3;
       color: #d4d4d4;
@@ -1548,4 +1642,4 @@ function escapeHtml(text) {
     .replace(/'/g, '&#039;');
 }
 
-module.exports = { generateSlideHtml, COLORS };
+module.exports = { generateSlideHtml, setThemeConfig, COLORS, TYPOGRAPHY };

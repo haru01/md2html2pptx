@@ -1,0 +1,46 @@
+{
+  "fonts": {
+    "body": "'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif",
+    "code": "'Consolas', 'Monaco', 'Courier New', monospace"
+  },
+  "colors": {
+    "titleBackground": "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+    "titleText": "#F8FAFC",
+    "subtitleText": "#94A3B8",
+    "primary": "#0891B2",
+    "accent": "#22D3EE",
+    "text": "#0F172A",
+    "muted": "#64748B",
+    "surface": "#F8FAFC",
+    "white": "#FFFFFF",
+    "border": "#E2E8F0",
+    "headerBg": "#F1F5F9",
+    "cardShadow": "0 2px 8px rgba(0,0,0,0.08)",
+    "good": {
+      "background": "#d4edda",
+      "foreground": "#155724",
+      "border": "#28a745"
+    },
+    "bad": {
+      "background": "#f8d7da",
+      "foreground": "#721c24",
+      "border": "#dc3545"
+    }
+  },
+  "typography": {
+    "titleSlide": {
+      "titleSize": 42,
+      "subtitleSize": 18
+    },
+    "contentSlide": {
+      "titleSize": 28,
+      "listSize": 20,
+      "subListSize": 18,
+      "subSubListSize": 16
+    },
+    "codeSlide": {
+      "titleSize": 28,
+      "codeSize": 14
+    }
+  }
+}

@@ -37,7 +37,34 @@ function resolveMd2html() {
 
 const md2htmlPath = resolveMd2html();
 const { parseMarkdown } = require(path.join(md2htmlPath, "parser"));
-const { generateSlideHtml } = require(path.join(md2htmlPath, "templates"));
+const { generateSlideHtml, setThemeConfig } = require(path.join(md2htmlPath, "templates"));
+
+/**
+ * theme.jsonを読み込む
+ * 優先順位:
+ * 1. Markdownファイルと同じディレクトリのtheme.json
+ * 2. カレントディレクトリの1_mds/theme.json
+ * 3. スキルのassets/1_mds/theme.json
+ */
+function loadThemeConfig(inputPath) {
+  const candidates = [
+    inputPath ? path.join(path.dirname(inputPath), "theme.json") : null,
+    path.join(process.cwd(), "1_mds", "theme.json"),
+    path.join(__dirname, "1_mds", "theme.json"),
+  ].filter(Boolean);
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      try {
+        const content = fs.readFileSync(candidate, "utf-8");
+        return { config: JSON.parse(content), path: candidate };
+      } catch (e) {
+        console.warn(`  ⚠️ theme.json読み込みエラー: ${candidate}`);
+      }
+    }
+  }
+  return { config: null, path: null };
+}
 
 // theme.cssのパスを解決
 function resolveThemeCss() {
@@ -134,6 +161,13 @@ async function main() {
 
   console.log(`📄 読み込み: ${args.input}`);
   console.log(`   md2html: ${md2htmlPath}`);
+
+  // theme.jsonを読み込み
+  const { config: themeConfig, path: themePath } = loadThemeConfig(inputPath);
+  if (themeConfig) {
+    setThemeConfig(themeConfig);
+    console.log(`   theme: ${themePath}`);
+  }
 
   // Markdownをパース
   const slides = parseMarkdown(markdown);
