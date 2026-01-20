@@ -1072,7 +1072,7 @@ function generateCompositeGrid(slide, items, rows, cols) {
     .inline-card {
       background: ${COLORS.surface};
       border-radius: ${Math.max(4, borderRadius / 2)}px;
-      padding: ${Math.max(6, padding / 2)}px;
+      padding: ${Math.max(8, padding / 2)}px ${Math.max(8, padding / 2)}px ${Math.max(8, padding / 2)}px ${Math.max(12, padding)}px;
     }
     .inline-card h4 {
       color: ${COLORS.primary};
@@ -1089,22 +1089,22 @@ function generateCompositeGrid(slide, items, rows, cols) {
       font-size: ${Math.max(8, itemFontSize - 1)}px;
       line-height: 1.3;
     }
-    .inline-card-good {
+    .inline-card.inline-card-good {
       background: ${COLORS.goodBackground};
     }
-    .inline-card-good h4 {
+    .inline-card.inline-card-good h4 {
       color: ${COLORS.goodForeground};
     }
-    .inline-card-good li {
+    .inline-card.inline-card-good li {
       color: ${COLORS.goodForeground};
     }
-    .inline-card-bad {
+    .inline-card.inline-card-bad {
       background: ${COLORS.badBackground};
     }
-    .inline-card-bad h4 {
+    .inline-card.inline-card-bad h4 {
       color: ${COLORS.badForeground};
     }
-    .inline-card-bad li {
+    .inline-card.inline-card-bad li {
       color: ${COLORS.badForeground};
     }
     .inline-card-step {
@@ -1113,41 +1113,41 @@ function generateCompositeGrid(slide, items, rows, cols) {
       gap: 8px;
     }
     /* Variant styles for single grid cells - same as regular cards */
-    .grid-cell-card-good {
+    .grid-cell-card.grid-cell-card-good {
       background: ${COLORS.goodBackground};
     }
-    .grid-cell-card-good h3 {
+    .grid-cell-card.grid-cell-card-good h3 {
       color: ${COLORS.goodForeground};
     }
-    .grid-cell-card-good li {
+    .grid-cell-card.grid-cell-card-good li {
       color: ${COLORS.goodForeground};
     }
-    .grid-cell-card-bad {
+    .grid-cell-card.grid-cell-card-bad {
       background: ${COLORS.badBackground};
     }
-    .grid-cell-card-bad h3 {
+    .grid-cell-card.grid-cell-card-bad h3 {
       color: ${COLORS.badForeground};
     }
-    .grid-cell-card-bad li {
+    .grid-cell-card.grid-cell-card-bad li {
       color: ${COLORS.badForeground};
     }
     /* Variant styles for nested cells - same as regular cards */
-    .nested-cell-good {
+    .nested-cell.nested-cell-good {
       background: ${COLORS.goodBackground};
     }
-    .nested-cell-good h4 {
+    .nested-cell.nested-cell-good h4 {
       color: ${COLORS.goodForeground};
     }
-    .nested-cell-good li {
+    .nested-cell.nested-cell-good li {
       color: ${COLORS.goodForeground};
     }
-    .nested-cell-bad {
+    .nested-cell.nested-cell-bad {
       background: ${COLORS.badBackground};
     }
-    .nested-cell-bad h4 {
+    .nested-cell.nested-cell-bad h4 {
       color: ${COLORS.badForeground};
     }
-    .nested-cell-bad li {
+    .nested-cell.nested-cell-bad li {
       color: ${COLORS.badForeground};
     }
     .grid-cell-table {
