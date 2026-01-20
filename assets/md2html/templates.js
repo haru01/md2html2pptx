@@ -182,10 +182,10 @@ function generateContentSlide(slide) {
     }
     .sub-sub-list > li {
       color: #94A3B8;
-      font-size: 13px;
+      font-size: 16px;
       font-weight: 400;
-      line-height: 1.5;
-      margin-bottom: 1px;
+      line-height: 1.6;
+      margin-bottom: 2px;
     }
     /* Fallback for flat list */
     ul.flat-list {
@@ -213,6 +213,10 @@ function generateContentSlide(slide) {
       if (typeof item === 'object' && item.subItems && item.subItems.length > 0) {
         const subListHtml = generateNestedList(item.subItems, depth + 1);
         return `        <li>${escapeHtml(item.text)}\n${subListHtml}        </li>`;
+      } else if (typeof item === 'object' && item.subSubItems && item.subSubItems.length > 0) {
+        // Handle subSubItems (third level)
+        const subSubListHtml = generateNestedList(item.subSubItems.map(text => ({ text })), depth + 1);
+        return `        <li>${escapeHtml(item.text)}\n${subSubListHtml}        </li>`;
       } else {
         const text = typeof item === 'object' ? item.text : item;
         return `        <li>${escapeHtml(text)}</li>`;
@@ -922,7 +926,7 @@ function generateCompositeCardsHtmlWithDepth(cards, depth) {
     if (card.variant === 'step') {
       const stepNum = card.number !== undefined ? card.number : 0;
       return `          <div class="composite-card composite-card-step" style="padding: ${padding}px; display: flex; gap: ${gap}px; align-items: flex-start;">
-            <div class="step-num" style="width: ${stepNumSize}px; height: ${stepNumSize}px; font-size: ${Math.round(fontSize * 1.1)}px;">${stepNum}</div>
+            <div class="step-num" style="width: ${stepNumSize}px; height: ${stepNumSize}px; font-size: ${Math.round(fontSize * 1.1)}px;"><p>${stepNum}</p></div>
             <div class="step-content" style="flex: 1;">
               <h3 style="font-size: ${titleSize}px; margin: 0 0 4px 0;">${escapeHtml(card.name)}</h3>
               <ul style="margin: 0; padding-left: 0; list-style: none;">
@@ -1318,7 +1322,7 @@ ${itemsHtml}
         if (card.variant === 'step') {
           const stepNum = card.number !== undefined ? card.number : '';
           return `          <div class="inline-card inline-card-step">
-            <div class="step-num">${stepNum}</div>
+            <div class="step-num"><p>${stepNum}</p></div>
             <div class="step-content">
               <h4>${escapeHtml(card.name)}</h4>
               <ul>

@@ -784,19 +784,48 @@ var ExtractSlideData = (function(exports) {
 						const liText = textNodes.join("").trim();
 						if (liText) {
 							const liComputed = window.getComputedStyle(li);
-							const run = {
-								text: liText.replace(/^[•\-*▪▸]\s*/, ""),
-								options: {
-									fontSize: pxToPoints(liComputed.fontSize),
-									fontFace: liComputed.fontFamily.split(",")[0].replace(/['"]/g, "").trim(),
-									color: rgbToHex(liComputed.color),
-									bullet: { indent: textIndent },
-									indentLevel: indentLevel,
-									breakLine: true,
-									lineSpacingMultiple: 1.5
-								}
-							};
-							items.push(run);
+							const cleanText = liText.replace(/^[•\-*▪▸]\s*/, "");
+
+							if (indentLevel === 0) {
+								// Top level: add colored checkmark as separate text run, then content
+								items.push({
+									text: '✓ ',
+									options: {
+										fontSize: pxToPoints(liComputed.fontSize),
+										fontFace: liComputed.fontFamily.split(",")[0].replace(/['"]/g, "").trim(),
+										color: '0891B2',
+										bullet: false,
+										breakLine: false
+									}
+								});
+								items.push({
+									text: cleanText,
+									options: {
+										fontSize: pxToPoints(liComputed.fontSize),
+										fontFace: liComputed.fontFamily.split(",")[0].replace(/['"]/g, "").trim(),
+										color: rgbToHex(liComputed.color),
+										bullet: false,
+										indentLevel: indentLevel,
+										breakLine: true,
+										lineSpacingMultiple: 1.5
+									}
+								});
+							} else {
+								// Nested levels: no bullet
+								const run = {
+									text: cleanText,
+									options: {
+										fontSize: pxToPoints(liComputed.fontSize),
+										fontFace: liComputed.fontFamily.split(",")[0].replace(/['"]/g, "").trim(),
+										color: rgbToHex(liComputed.color),
+										bullet: false,
+										indentLevel: indentLevel,
+										breakLine: true,
+										lineSpacingMultiple: 1.5
+									}
+								};
+								items.push(run);
+							}
 						}
 						// Process nested lists
 						const nestedLists = Array.from(li.children).filter(child => child.tagName === "UL" || child.tagName === "OL");

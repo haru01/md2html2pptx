@@ -458,11 +458,20 @@ async function addElements(slideData, targetSlide, pres) {
 		// Process items to apply indentLevel
 		const processedItems = el.items.map(item => {
 			const options = { ...item.options };
+			let text = item.text;
 			if (options.indentLevel !== undefined && options.indentLevel > 0) {
-				options.bullet = { ...options.bullet, indent: (options.bullet?.indent || 9) + options.indentLevel * 9 };
+				// Apply indent for nested items
+				if (options.bullet === false) {
+					// No bullet - add spaces for indent (4 spaces per level)
+					const spaces = '    '.repeat(options.indentLevel);
+					text = spaces + text;
+					options.bullet = false;
+				} else {
+					options.bullet = { ...options.bullet, indent: (options.bullet?.indent || 9) + options.indentLevel * 9 };
+				}
 				options.indentLevel = options.indentLevel;
 			}
-			return { text: item.text, options };
+			return { text, options };
 		});
 		targetSlide.addText(processedItems, listOptions);
 	} else {
