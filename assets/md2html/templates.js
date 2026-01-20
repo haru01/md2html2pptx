@@ -79,11 +79,14 @@ const SYNTAX_HIGHLIGHT_CSS = `
     .hljs-selector-class { color: #d7ba7d; }
     .hljs-selector-id { color: #d7ba7d; }`;
 
-// Mermaid.js CDN script for diagram rendering
-// After rendering, marks SVGs with data-rasterize for html2pptx to convert to images
-const MERMAID_SCRIPT = `
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"><\/script>
-    <script>
+/**
+ * CDN Scripts configuration
+ * Centralized management of external CDN resources
+ */
+const CDN_SCRIPTS = {
+  mermaid: {
+    src: 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js',
+    init: `
       mermaid.initialize({
         startOnLoad: false,
         theme: 'default',
@@ -95,8 +98,29 @@ const MERMAID_SCRIPT = `
         document.querySelectorAll('.mermaid svg').forEach((svg, i) => {
           svg.setAttribute('data-rasterize', 'mermaid-' + i);
         });
-      });
-    <\/script>`;
+      });`
+  },
+  hljs: {
+    src: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js',
+    init: 'hljs.highlightAll();'
+  }
+};
+
+/**
+ * Generate CDN script tag with initialization code
+ * @param {string} name - CDN script name (e.g., 'mermaid', 'hljs')
+ * @returns {string} - HTML script tags or empty string if not found
+ */
+function generateCdnScript(name) {
+  const script = CDN_SCRIPTS[name];
+  if (!script) return '';
+  return `
+    <script src="${script.src}"><\/script>
+    <script>${script.init}<\/script>`;
+}
+
+// Legacy alias for backwards compatibility
+const MERMAID_SCRIPT = generateCdnScript('mermaid');
 
 /**
  * Check if a code block is Mermaid diagram
@@ -106,6 +130,36 @@ const MERMAID_SCRIPT = `
 function isMermaidCode(codeBlock) {
   return codeBlock && codeBlock.language &&
          codeBlock.language.toLowerCase() === 'mermaid';
+}
+
+/**
+ * Get the render type for a code block
+ * @param {Object} codeBlock - Code block with language and code
+ * @returns {'mermaid' | 'code' | null}
+ */
+function getCodeBlockRenderType(codeBlock) {
+  if (!codeBlock) return null;
+  if (isMermaidCode(codeBlock)) return 'mermaid';
+  return 'code';
+}
+
+/**
+ * Determine required CDN scripts for a list of items
+ * @param {Array} items - Array of composite items
+ * @returns {Set<string>} - Set of required script names ('mermaid', 'hljs')
+ */
+function getRequiredScripts(items) {
+  const scripts = new Set();
+
+  for (const item of items) {
+    if (item.type === 'code' && item.codeBlock) {
+      const renderType = getCodeBlockRenderType(item.codeBlock);
+      if (renderType === 'mermaid') scripts.add('mermaid');
+      if (renderType === 'code') scripts.add('hljs');
+    }
+  }
+
+  return scripts;
 }
 
 // Legacy aliases for backwards compatibility (computed from THEME)
@@ -301,6 +355,57 @@ const CARD_STYLE_BLOCKS = {
     .card-step li {
       color: var(--theme-muted);
       font-size: 13px;
+    }`
+};
+
+/**
+ * Mermaid diagram style blocks
+ * Centralized CSS for Mermaid containers across different slide types
+ */
+const MERMAID_STYLES = {
+  /**
+   * Base Mermaid container styles (used in standalone Mermaid slides)
+   */
+  base: (cardShadow) => `
+    .mermaid-container {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: ${cardShadow};
+      min-height: 300px;
+    }
+    .mermaid {
+      margin: 0;
+      font-family: inherit;
+    }`,
+
+  /**
+   * Grid cell Mermaid styles (used in composite grid layouts)
+   * @param {Object} s - Style values from calculateGridStyles
+   */
+  grid: (s) => `
+    .grid-cell-mermaid {
+      background: white;
+      border-radius: ${s.borderRadius}px;
+      box-shadow: var(--card-shadow);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .grid-cell-mermaid .mermaid-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: ${Math.max(8, s.padding)}px;
+    }
+    .grid-cell-mermaid .mermaid {
+      margin: 0;
+      font-family: inherit;
     }`
 };
 
@@ -652,9 +757,7 @@ ${items}
       </div>`;
   }).join('\n');
 
-  const hljsScript = hasCodeBlock ? `
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"><\/script>
-    <script>hljs.highlightAll();<\/script>` : '';
+  const hljsScript = hasCodeBlock ? generateCdnScript('hljs') : '';
 
   const body = `${section}    <h1>${escapeHtml(title)}</h1>
     <div class="cards">
@@ -869,21 +972,7 @@ function generateMermaidSlide(slide) {
       color: ${COLORS.text};
       font-size: 28px;
       margin: 0 0 16px 0;
-    }
-    .mermaid-container {
-      background: white;
-      border-radius: 12px;
-      padding: 24px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      box-shadow: ${COLORS.cardShadow};
-      min-height: 300px;
-    }
-    .mermaid {
-      margin: 0;
-      font-family: inherit;
-    }`;
+    }${MERMAID_STYLES.base(COLORS.cardShadow)}`;
 
   const section = slide.section ? `    <p class="section-num">${escapeHtml(slide.section)}</p>\n` : '';
   const title = slide.title || slide.name;
@@ -956,9 +1045,7 @@ function generateCodeSlide(slide) {
   const body = `${section}    <h1>${escapeHtml(title)}</h1>
     <div class="code-container">
       <pre><code class="language-${escapeHtml(lang)}">${escapedCode}</code></pre>
-    </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"><\/script>
-    <script>hljs.highlightAll();<\/script>`;
+    </div>${generateCdnScript('hljs')}`;
 
   return wrapWithBase(style, body);
 }
@@ -1350,27 +1437,7 @@ function generateGridCss(s) {
       font-size: ${s.codeFontSize}px;
       line-height: 1.4;
       color: #d4d4d4;
-    }${SYNTAX_HIGHLIGHT_CSS}
-    .grid-cell-mermaid {
-      background: white;
-      border-radius: ${s.borderRadius}px;
-      box-shadow: ${COLORS.cardShadow};
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .grid-cell-mermaid .mermaid-container {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: ${Math.max(8, s.padding)}px;
-    }
-    .grid-cell-mermaid .mermaid {
-      margin: 0;
-      font-family: inherit;
-    }
+    }${SYNTAX_HIGHLIGHT_CSS}${MERMAID_STYLES.grid(s)}
     .grid-cell-multi-cards {
       display: flex;
       flex-direction: column;
@@ -1691,19 +1758,10 @@ ${itemsHtml}
     ? cellsHtml + '\n' + Array(totalCells - expandedItems.length).fill('      <div class="grid-cell"></div>').join('\n')
     : cellsHtml;
 
-  // Check if any code blocks exist (check both original items and expanded items)
-  const hasCodeBlock = items.some(item => item.type === 'code' && item.codeBlock && !isMermaidCode(item.codeBlock)) ||
-    expandedItems.some(item => item.type === 'code' && item.codeBlock && !isMermaidCode(item.codeBlock));
-
-  // Check if any Mermaid diagrams exist
-  const hasMermaid = items.some(item => item.type === 'code' && item.codeBlock && isMermaidCode(item.codeBlock)) ||
-    expandedItems.some(item => item.type === 'code' && item.codeBlock && isMermaidCode(item.codeBlock));
-
-  const hljsScript = hasCodeBlock ? `
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"><\/script>
-    <script>hljs.highlightAll();<\/script>` : '';
-
-  const mermaidScript = hasMermaid ? MERMAID_SCRIPT : '';
+  // Determine required CDN scripts (check both original items and expanded items)
+  const requiredScripts = getRequiredScripts([...items, ...expandedItems]);
+  const hljsScript = requiredScripts.has('hljs') ? generateCdnScript('hljs') : '';
+  const mermaidScript = requiredScripts.has('mermaid') ? generateCdnScript('mermaid') : '';
 
   const body = `${section}    <h1>${escapeHtml(title)}</h1>
     <div class="grid-container">

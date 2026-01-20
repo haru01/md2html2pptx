@@ -669,13 +669,22 @@ const ELEMENT_TYPE_CREATORS = {
 
 /**
  * Check if content matches an element type declaration and return the type
+ *
+ * Note: Mermaid declarations are intentionally treated as 'code' type here.
+ * The actual rendering method (Mermaid.js vs highlight.js) is determined
+ * in templates.js based on the codeBlock.language property ('mermaid').
+ * This design keeps the parser simple while allowing templates.js to handle
+ * all rendering decisions.
+ *
  * @param {string} content - Content to check
- * @returns {string|null} - Element type or null
+ * @returns {'bulletList'|'code'|'table'|'flow'|null} - Element type or null
  */
 function matchElementType(content) {
   if (PATTERNS.bulletList.test(content)) return 'bulletList';
   if (PATTERNS.code.test(content)) return 'code';
-  if (PATTERNS.mermaid.test(content)) return 'code'; // Mermaid is treated as code
+  // Mermaid is treated as 'code' - templates.js checks codeBlock.language
+  // to determine whether to render with Mermaid.js or highlight.js
+  if (PATTERNS.mermaid.test(content)) return 'code';
   if (PATTERNS.table.test(content)) return 'table';
   if (PATTERNS.flow.test(content)) return 'flow';
   return null;
