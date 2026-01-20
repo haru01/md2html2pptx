@@ -939,14 +939,13 @@ function generateCompositeGrid(slide, items, rows, cols) {
   // Calculate responsive sizes based on grid dimensions and content density
   // Note: PPTX conversion uses 0.75 factor (24px HTML = 18pt PPTX)
   const gridSize = Math.max(rows, cols);
-  // Count actual cards/items (not just item groups)
-  const totalCards = items.reduce((sum, item) => {
-    if (item.type === 'cards' && item.cards) return sum + item.cards.length;
-    return sum + 1;
-  }, 0);
-  const cardsPerCell = Math.ceil(totalCards / totalCells);
+  // Count max cards in a single cell (not average)
+  const maxCardsInCell = items.reduce((max, item) => {
+    if (item.type === 'cards' && item.cards) return Math.max(max, item.cards.length);
+    return max;
+  }, 1);
   // Scale down if many cards per cell or large grid
-  const densityFactor = cardsPerCell > 1 ? cardsPerCell - 1 : 0;
+  const densityFactor = maxCardsInCell > 1 ? maxCardsInCell : 0;
   const gridFactor = gridSize <= 2 ? 0 : gridSize - 2;
   const scaleFactor = Math.max(densityFactor, gridFactor);
   const gap = Math.max(4, 16 - scaleFactor * 2);
