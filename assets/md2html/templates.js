@@ -1092,16 +1092,20 @@ function generateCompositeGrid(slide, items, rows, cols) {
     }
     .inline-card-good {
       background: ${COLORS.goodBackground};
-      border-left: 3px solid ${COLORS.goodBorder};
     }
     .inline-card-good h4 {
       color: ${COLORS.goodForeground};
     }
+    .inline-card-good li {
+      color: ${COLORS.goodForeground};
+    }
     .inline-card-bad {
       background: ${COLORS.badBackground};
-      border-left: 3px solid ${COLORS.badBorder};
     }
     .inline-card-bad h4 {
+      color: ${COLORS.badForeground};
+    }
+    .inline-card-bad li {
       color: ${COLORS.badForeground};
     }
     .inline-card-step {
@@ -1109,34 +1113,42 @@ function generateCompositeGrid(slide, items, rows, cols) {
       align-items: flex-start;
       gap: 8px;
     }
-    /* Variant styles for single grid cells */
+    /* Variant styles for single grid cells - same as regular cards */
     .grid-cell-card-good {
       background: ${COLORS.goodBackground};
-      border-left: 4px solid ${COLORS.goodBorder};
     }
     .grid-cell-card-good h3 {
       color: ${COLORS.goodForeground};
     }
+    .grid-cell-card-good li {
+      color: ${COLORS.goodForeground};
+    }
     .grid-cell-card-bad {
       background: ${COLORS.badBackground};
-      border-left: 4px solid ${COLORS.badBorder};
     }
     .grid-cell-card-bad h3 {
       color: ${COLORS.badForeground};
     }
-    /* Variant styles for nested cells */
+    .grid-cell-card-bad li {
+      color: ${COLORS.badForeground};
+    }
+    /* Variant styles for nested cells - same as regular cards */
     .nested-cell-good {
       background: ${COLORS.goodBackground};
-      border-left: 3px solid ${COLORS.goodBorder};
     }
     .nested-cell-good h4 {
       color: ${COLORS.goodForeground};
     }
+    .nested-cell-good li {
+      color: ${COLORS.goodForeground};
+    }
     .nested-cell-bad {
       background: ${COLORS.badBackground};
-      border-left: 3px solid ${COLORS.badBorder};
     }
     .nested-cell-bad h4 {
+      color: ${COLORS.badForeground};
+    }
+    .nested-cell-bad li {
       color: ${COLORS.badForeground};
     }
     .grid-cell-table {
