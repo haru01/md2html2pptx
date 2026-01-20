@@ -233,3 +233,56 @@ print(add(1, 2))
   - 開発
   - テスト
   - リリース
+
+## PART 3: Mermaid図表
+- 副題: Mermaidダイアグラムの活用例
+
+## 3.1: シーケンス図
+- Mermaid:
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant API
+    participant DB
+    User->>API: リクエスト
+    API->>DB: クエリ
+    DB-->>API: データ
+    API-->>User: レスポンス
+```
+
+## 3.2: リストとMermaid
+- 複合: 1:2
+  - リスト:
+    - システム構成の概要
+      - フロントエンド
+      - バックエンド
+      - データベース
+    - 各層の役割
+      - UIの提供
+      - ビジネスロジック
+      - データ永続化
+  - Mermaid:
+
+```mermaid
+flowchart TD
+    A[フロントエンド] --> B[バックエンド]
+    B --> C[(データベース)]
+    B --> D[外部API]
+```
+
+## 3.3: カードとMermaid
+- 複合: 1:2
+  - カード1: アーキテクチャ
+    - マイクロサービス構成
+    - 各サービスは独立
+    - APIで連携
+  - Mermaid:
+
+```mermaid
+flowchart LR
+    A[認証] --> B[API Gateway]
+    B --> C[ユーザー]
+    B --> D[注文]
+    B --> E[在庫]
+```
