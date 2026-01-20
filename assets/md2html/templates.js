@@ -176,6 +176,106 @@ function setThemeConfig(config) {
 }
 
 /**
+ * Build CSS string from conditional style blocks
+ * @param {Object.<string, boolean>} conditions - Style name to condition map
+ * @param {Object.<string, string>} styleBlocks - Style name to CSS string map
+ * @returns {string} - Combined CSS string
+ */
+const buildConditionalStyles = (conditions, styleBlocks) =>
+  Object.entries(conditions)
+    .filter(([_, shouldInclude]) => shouldInclude)
+    .map(([key]) => styleBlocks[key] || '')
+    .join('');
+
+/**
+ * Card slide style blocks for conditional inclusion
+ */
+const CARD_STYLE_BLOCKS = {
+  codeBlock: `
+    .card-code {
+      background: #1e1e1e;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-top: 12px;
+      overflow: hidden;
+    }
+    .card-code .lang-label {
+      color: #858585;
+      font-size: 10px;
+      margin: 0 0 8px 0;
+      font-family: var(--font-code);
+    }
+    .card-code pre {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .card-code code {
+      font-family: var(--font-code);
+      font-size: 11px;
+      line-height: 1.4;
+      color: #d4d4d4;
+    }${SYNTAX_HIGHLIGHT_CSS}`,
+
+  variants: `
+    .card-good {
+      background: var(--color-good);
+    }
+    .card-bad {
+      background: var(--color-bad);
+    }
+    .card-good h2, .card-good li {
+      color: var(--color-good-fg);
+    }
+    .card-bad h2, .card-bad li {
+      color: var(--color-bad-fg);
+    }`,
+
+  steps: `
+    .card-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .step-num {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, var(--theme-primary) 0%, #0E7490 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .step-num p {
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+      margin: 0;
+    }
+    .step-content {
+      flex: 1;
+    }
+    .card-step h2 {
+      color: var(--theme-text);
+      font-size: 14px;
+      font-weight: 600;
+      margin: 0 0 4px 0;
+    }
+    .card-step ul {
+      margin: 0;
+      padding-left: 0;
+      list-style: none;
+    }
+    .card-step li {
+      color: var(--theme-muted);
+      font-size: 13px;
+    }`
+};
+
+/**
  * Wrap HTML content with base template
  */
 function wrapWithBase(styleContent, bodyContent, bodyBackground = null) {
@@ -420,96 +520,23 @@ function generateCardsSlide(slide) {
   const hasVariants = cards.some(c => c.variant === 'good' || c.variant === 'bad');
   const hasSteps = cards.some(c => c.variant === 'step');
 
-  const codeBlockStyles = hasCodeBlock ? `
-    .card-code {
-      background: #1e1e1e;
-      border-radius: 8px;
-      padding: 12px 16px;
-      margin-top: 12px;
-      overflow: hidden;
-    }
-    .card-code .lang-label {
-      color: #858585;
-      font-size: 10px;
-      margin: 0 0 8px 0;
-      font-family: ${FONTS.code};
-    }
-    .card-code pre {
-      margin: 0;
-      padding: 0;
-      background: transparent;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-    .card-code code {
-      font-family: ${FONTS.code};
-      font-size: 11px;
-      line-height: 1.4;
-      color: #d4d4d4;
-    }${SYNTAX_HIGHLIGHT_CSS}` : '';
+  // Build conditional styles using the style builder
+  const conditionalStyles = buildConditionalStyles(
+    { codeBlock: hasCodeBlock, variants: hasVariants, steps: hasSteps },
+    CARD_STYLE_BLOCKS
+  );
 
-  const variantStyles = hasVariants ? `
-    .card-good {
-      background: ${COLORS.good};
-    }
-    .card-bad {
-      background: ${COLORS.bad};
-    }
-    .card-good h2 {
-      color: ${COLORS.goodForeground};
-    }
-    .card-bad h2 {
-      color: ${COLORS.badForeground};
-    }
-    .card-good li {
-      color: ${COLORS.goodForeground};
-    }
-    .card-bad li {
-      color: ${COLORS.badForeground};
-    }` : '';
+  // CSS custom properties for card styles
+  const cardCssVars = `
+    --color-good: ${COLORS.good};
+    --color-bad: ${COLORS.bad};
+    --color-good-fg: ${COLORS.goodForeground};
+    --color-bad-fg: ${COLORS.badForeground};
+    --font-code: ${FONTS.code};`;
 
-  const stepStyles = hasSteps ? `
-    .card-step {
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
+  const style = `    :root {${cardCssVars}
     }
-    .step-num {
-      width: 32px;
-      height: 32px;
-      flex-shrink: 0;
-      background: linear-gradient(135deg, ${COLORS.primary} 0%, #0E7490 100%);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .step-num p {
-      color: ${COLORS.white};
-      font-size: 14px;
-      font-weight: 700;
-      margin: 0;
-    }
-    .step-content {
-      flex: 1;
-    }
-    .card-step h2 {
-      color: ${COLORS.text};
-      font-size: 14px;
-      font-weight: 600;
-      margin: 0 0 4px 0;
-    }
-    .card-step ul {
-      margin: 0;
-      padding-left: 0;
-      list-style: none;
-    }
-    .card-step li {
-      color: ${COLORS.muted};
-      font-size: 13px;
-    }` : '';
-
-  const style = `    .slide {
+    .slide {
       background: ${COLORS.surface};
       padding: 32px 60px;
     }
@@ -561,7 +588,7 @@ function generateCardsSlide(slide) {
       border-radius: 4px;
       font-family: ${FONTS.code};
       font-size: 12px;
-    }${variantStyles}${stepStyles}${codeBlockStyles}`;
+    }${conditionalStyles}`;
 
   const section = slide.section ? `    <p class="section-num">${escapeHtml(slide.section)}</p>\n` : '';
   const title = slide.title || slide.name;
@@ -1082,43 +1109,48 @@ ${items}
 }
 
 /**
- * Generate grid composite slide (NxM layout, supports 1x2 to 8x8)
- * @param {Object} slide - Slide data
+ * Calculate grid styles based on dimensions and content density
+ * @param {number} rows - Number of rows
+ * @param {number} cols - Number of columns
  * @param {Array} items - Composite items
- * @param {number} rows - Number of rows (2-8)
- * @param {number} cols - Number of columns (2-8)
+ * @returns {Object} - Calculated style values
  */
-function generateCompositeGrid(slide, items, rows, cols) {
-  const totalCells = rows * cols;
-
-  // Calculate responsive sizes based on grid dimensions and content density
-  // Note: PPTX conversion uses 0.75 factor (24px HTML = 18pt PPTX)
+function calculateGridStyles(rows, cols, items) {
   const gridSize = Math.max(rows, cols);
-  // Count max cards in a single cell (not average)
-  const maxCardsInCell = items.reduce((max, item) => {
-    if (item.type === 'cards' && item.cards) return Math.max(max, item.cards.length);
-    return max;
-  }, 1);
-  // Scale down if many cards per cell or large grid
-  // For 2x2 grid, use milder scaling to keep text readable
+  const maxCardsInCell = items.reduce((max, item) =>
+    item.type === 'cards' && item.cards ? Math.max(max, item.cards.length) : max, 1);
+
   const densityFactor = maxCardsInCell > 1 ? Math.min(maxCardsInCell, 2) : 0;
   const gridFactor = gridSize <= 2 ? 0 : gridSize - 2;
   const scaleFactor = Math.max(densityFactor, gridFactor);
+
   const gap = Math.max(4, 16 - scaleFactor * 2);
   const padding = Math.max(6, 16 - scaleFactor * 2);
-  const titleFontSize = Math.max(14, 24 - scaleFactor * 3); // 24px = 18pt in PPTX, min 14px for readability
-  const itemFontSize = Math.max(14, 24 - scaleFactor * 3);  // 24px = 18pt in PPTX, min 14px for readability
-  const codeFontSize = Math.max(11, Math.round(itemFontSize * 0.75)); // smaller font for code
+  const titleFontSize = Math.max(14, 24 - scaleFactor * 3);
+  const itemFontSize = Math.max(14, 24 - scaleFactor * 3);
+  const codeFontSize = Math.max(11, Math.round(itemFontSize * 0.75));
   const borderRadius = Math.max(4, 12 - scaleFactor);
   const headerMargin = Math.max(2, 10 - scaleFactor);
 
-  // Calculate fixed dimensions for PPTX compatibility
-  const containerWidth = 960 - 120; // 840px
+  const containerWidth = 840;
   const containerHeight = rows >= 5 ? 400 : 380;
   const cellWidth = Math.floor((containerWidth - (cols - 1) * gap) / cols);
   const cellHeight = Math.floor((containerHeight - (rows - 1) * gap) / rows);
 
-  const style = `    .slide {
+  return {
+    gap, padding, titleFontSize, itemFontSize, codeFontSize,
+    borderRadius, headerMargin, containerWidth, containerHeight,
+    cellWidth, cellHeight, rows, cols, scaleFactor
+  };
+}
+
+/**
+ * Generate grid CSS from calculated styles
+ * @param {Object} s - Style values from calculateGridStyles
+ * @returns {string} - CSS string
+ */
+function generateGridCss(s) {
+  return `    .slide {
       background: ${COLORS.surface};
       padding: 32px 60px;
     }
@@ -1130,20 +1162,20 @@ function generateCompositeGrid(slide, items, rows, cols) {
     }
     h1 {
       color: ${COLORS.text};
-      font-size: ${rows >= 5 ? 22 : 28}px;
-      margin: 0 0 ${rows >= 5 ? 10 : 16}px 0;
+      font-size: ${s.rows >= 5 ? 22 : 28}px;
+      margin: 0 0 ${s.rows >= 5 ? 10 : 16}px 0;
     }
     .grid-container {
       display: flex;
       flex-wrap: wrap;
-      gap: ${gap}px;
-      width: ${containerWidth}px;
-      height: ${containerHeight}px;
+      gap: ${s.gap}px;
+      width: ${s.containerWidth}px;
+      height: ${s.containerHeight}px;
       align-content: flex-start;
     }
     .grid-cell {
-      width: ${cellWidth}px;
-      height: ${cellHeight}px;
+      width: ${s.cellWidth}px;
+      height: ${s.cellHeight}px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -1151,61 +1183,61 @@ function generateCompositeGrid(slide, items, rows, cols) {
     }
     .grid-cell-card {
       background: ${COLORS.white};
-      border-radius: ${borderRadius}px;
-      padding: ${padding}px;
+      border-radius: ${s.borderRadius}px;
+      padding: ${s.padding}px;
       box-shadow: ${COLORS.cardShadow};
     }
     .grid-cell h3 {
       color: ${COLORS.primary};
-      font-size: ${titleFontSize}px;
+      font-size: ${s.titleFontSize}px;
       font-weight: 600;
-      margin: 0 0 ${headerMargin}px 0;
+      margin: 0 0 ${s.headerMargin}px 0;
       line-height: 1.2;
     }
     .grid-cell ul {
       margin: 0;
-      padding-left: ${Math.max(10, 18 - Math.max(rows, cols))}px;
+      padding-left: ${Math.max(10, 18 - Math.max(s.rows, s.cols))}px;
     }
     .grid-cell li {
       color: ${COLORS.muted};
-      font-size: ${itemFontSize}px;
+      font-size: ${s.itemFontSize}px;
       line-height: 1.4;
-      margin-bottom: ${Math.max(1, 4 - Math.max(rows, cols) / 2)}px;
+      margin-bottom: ${Math.max(1, 4 - Math.max(s.rows, s.cols) / 2)}px;
     }
     .grid-cell li:last-child {
       margin-bottom: 0;
     }
     .grid-cell-nested {
-      padding: ${Math.max(2, padding / 2)}px;
+      padding: ${Math.max(2, s.padding / 2)}px;
     }
     .nested-grid {
       height: 100%;
     }
     .nested-cell {
       background: ${COLORS.surface};
-      border-radius: ${Math.max(2, borderRadius / 2)}px;
-      padding: ${Math.max(2, padding / 2)}px;
+      border-radius: ${Math.max(2, s.borderRadius / 2)}px;
+      padding: ${Math.max(2, s.padding / 2)}px;
       overflow: hidden;
     }
     .nested-cell h4 {
       color: ${COLORS.primary};
-      font-size: ${Math.max(8, titleFontSize - 2)}px;
+      font-size: ${Math.max(8, s.titleFontSize - 2)}px;
       font-weight: 600;
-      margin: 0 0 ${Math.max(2, headerMargin / 2)}px 0;
+      margin: 0 0 ${Math.max(2, s.headerMargin / 2)}px 0;
       line-height: 1.2;
     }
     .nested-cell ul {
       margin: 0;
-      padding-left: ${Math.max(8, 14 - Math.max(rows, cols))}px;
+      padding-left: ${Math.max(8, 14 - Math.max(s.rows, s.cols))}px;
     }
     .nested-cell li {
       color: ${COLORS.muted};
-      font-size: ${Math.max(6, itemFontSize - 2)}px;
+      font-size: ${Math.max(6, s.itemFontSize - 2)}px;
       line-height: 1.3;
     }
     .grid-cell-code {
       background: #1e1e1e;
-      padding: ${Math.max(8, padding)}px;
+      padding: ${Math.max(8, s.padding)}px;
     }
     .grid-cell-code pre {
       margin: 0;
@@ -1215,46 +1247,46 @@ function generateCompositeGrid(slide, items, rows, cols) {
     }
     .grid-cell-code code {
       font-family: ${FONTS.code};
-      font-size: ${codeFontSize}px;
+      font-size: ${s.codeFontSize}px;
       line-height: 1.4;
       color: #d4d4d4;
     }${SYNTAX_HIGHLIGHT_CSS}
     .grid-cell-multi-cards {
       display: flex;
       flex-direction: column;
-      gap: ${Math.max(4, gap / 2)}px;
-      padding: ${Math.max(6, padding / 2)}px;
+      gap: ${Math.max(4, s.gap / 2)}px;
+      padding: ${Math.max(6, s.padding / 2)}px;
     }
     .inline-card {
       background: ${COLORS.surface};
-      border-radius: ${Math.max(4, borderRadius / 2)}px;
-      padding: ${Math.max(8, padding / 2)}px ${Math.max(8, padding / 2)}px ${Math.max(8, padding / 2)}px ${Math.max(12, padding)}px;
+      border-radius: ${Math.max(4, s.borderRadius / 2)}px;
+      padding: ${Math.max(8, s.padding / 2)}px ${Math.max(8, s.padding / 2)}px ${Math.max(8, s.padding / 2)}px ${Math.max(12, s.padding)}px;
     }
     .inline-card h4 {
       color: ${COLORS.primary};
-      font-size: ${Math.max(10, titleFontSize - 2)}px;
+      font-size: ${Math.max(10, s.titleFontSize - 2)}px;
       font-weight: 600;
-      margin: 0 0 ${Math.max(2, headerMargin / 2)}px 0;
+      margin: 0 0 ${Math.max(2, s.headerMargin / 2)}px 0;
     }
     .inline-card ul {
       margin: 0;
-      padding-left: ${Math.max(10, 16 - Math.max(rows, cols))}px;
+      padding-left: ${Math.max(10, 16 - Math.max(s.rows, s.cols))}px;
     }
     .inline-card li {
       color: ${COLORS.muted};
-      font-size: ${Math.max(8, itemFontSize - 1)}px;
+      font-size: ${Math.max(8, s.itemFontSize - 1)}px;
       line-height: 1.3;
     }
     .card-code {
       background: #1e1e1e;
-      border-radius: ${Math.max(4, borderRadius / 2)}px;
-      padding: ${Math.max(4, padding / 3)}px ${Math.max(6, padding / 2)}px;
-      margin-top: ${Math.max(4, headerMargin / 2)}px;
+      border-radius: ${Math.max(4, s.borderRadius / 2)}px;
+      padding: ${Math.max(4, s.padding / 3)}px ${Math.max(6, s.padding / 2)}px;
+      margin-top: ${Math.max(4, s.headerMargin / 2)}px;
       overflow: hidden;
     }
     .card-code code {
       font-family: ${FONTS.code};
-      font-size: ${Math.max(9, codeFontSize - 1)}px;
+      font-size: ${Math.max(9, s.codeFontSize - 1)}px;
       line-height: 1.3;
       color: #d4d4d4;
       white-space: pre-wrap;
@@ -1307,7 +1339,6 @@ function generateCompositeGrid(slide, items, rows, cols) {
       padding-left: 0;
       list-style: none;
     }
-    /* Variant styles for single grid cells - same as regular cards */
     .grid-cell-card.grid-cell-card-good {
       background: ${COLORS.goodBackground};
     }
@@ -1326,7 +1357,6 @@ function generateCompositeGrid(slide, items, rows, cols) {
     .grid-cell-card.grid-cell-card-bad li {
       color: ${COLORS.badForeground};
     }
-    /* Variant styles for nested cells - same as regular cards */
     .nested-cell.nested-cell-good {
       background: ${COLORS.goodBackground};
     }
@@ -1346,7 +1376,7 @@ function generateCompositeGrid(slide, items, rows, cols) {
       color: ${COLORS.badForeground};
     }
     .grid-cell-table {
-      padding: ${Math.max(4, padding / 2)}px;
+      padding: ${Math.max(4, s.padding / 2)}px;
     }
     .grid-table {
       width: 100%;
@@ -1359,12 +1389,12 @@ function generateCompositeGrid(slide, items, rows, cols) {
       background: ${COLORS.primary};
     }
     .grid-table-cell {
-      padding: ${Math.max(4, padding / 3)}px;
+      padding: ${Math.max(4, s.padding / 3)}px;
       border: 1px solid ${COLORS.border};
     }
     .grid-table-cell p {
       margin: 0;
-      font-size: ${Math.max(8, itemFontSize - 1)}px;
+      font-size: ${Math.max(8, s.itemFontSize - 1)}px;
       color: ${COLORS.text};
     }
     .grid-table-header-cell p {
@@ -1379,26 +1409,43 @@ function generateCompositeGrid(slide, items, rows, cols) {
     .grid-flow {
       display: flex;
       align-items: center;
-      gap: ${Math.max(4, gap / 2)}px;
+      gap: ${Math.max(4, s.gap / 2)}px;
       flex-wrap: wrap;
       justify-content: center;
     }
     .grid-flow-item {
       background: ${COLORS.primary};
-      border-radius: ${Math.max(4, borderRadius / 2)}px;
-      padding: ${Math.max(4, padding / 3)}px ${Math.max(8, padding / 2)}px;
+      border-radius: ${Math.max(4, s.borderRadius / 2)}px;
+      padding: ${Math.max(4, s.padding / 3)}px ${Math.max(8, s.padding / 2)}px;
     }
     .grid-flow-item p {
       margin: 0;
       color: ${COLORS.white};
-      font-size: ${Math.max(9, itemFontSize)}px;
+      font-size: ${Math.max(9, s.itemFontSize)}px;
       font-weight: 500;
     }
     .grid-flow-arrow p {
       margin: 0;
       color: ${COLORS.muted};
-      font-size: ${Math.max(12, titleFontSize)}px;
+      font-size: ${Math.max(12, s.titleFontSize)}px;
     }`;
+}
+
+/**
+ * Generate grid composite slide (NxM layout, supports 1x2 to 8x8)
+ * @param {Object} slide - Slide data
+ * @param {Array} items - Composite items
+ * @param {number} rows - Number of rows (2-8)
+ * @param {number} cols - Number of columns (2-8)
+ */
+function generateCompositeGrid(slide, items, rows, cols) {
+  const totalCells = rows * cols;
+
+  // Calculate responsive sizes using extracted function
+  const s = calculateGridStyles(rows, cols, items);
+
+  // Generate CSS using extracted function
+  const style = generateGridCss(s);
 
   const section = slide.section ? `    <p class="section-num">${escapeHtml(slide.section)}</p>\n` : '';
   const title = slide.title || slide.name;

@@ -15,25 +15,14 @@
 
 const fs = require("fs");
 const path = require("path");
+const { createResolver } = require("./utils/resolve");
 
 // md2htmlのパスを解決
-// 1. 環境変数 MD2HTML_PATH
-// 2. プロジェクト内の ./md2html
-// 3. スキルのassets内 (このスクリプトと同じディレクトリ)
-function resolveMd2html() {
-  const candidates = [
-    process.env.MD2HTML_PATH,
-    path.join(process.cwd(), "md2html"),
-    path.join(__dirname, "md2html"),
-  ].filter(Boolean);
-
-  for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) {
-      return candidate;
-    }
-  }
-  throw new Error("md2html not found. Set MD2HTML_PATH or copy md2html to project.");
-}
+const resolveMd2html = createResolver(
+  "MD2HTML_PATH",
+  [path.join(process.cwd(), "md2html"), path.join(__dirname, "md2html")],
+  "md2html not found. Set MD2HTML_PATH or copy md2html to project."
+);
 
 const md2htmlPath = resolveMd2html();
 const { parseMarkdown } = require(path.join(md2htmlPath, "parser"));
@@ -67,19 +56,11 @@ function loadThemeConfig(inputPath) {
 }
 
 // theme.cssのパスを解決
-function resolveThemeCss() {
-  const candidates = [
-    path.join(process.cwd(), "theme.css"),
-    path.join(__dirname, "html2pptx/playwright/theme.css"),
-  ];
-
-  for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) {
-      return candidate;
-    }
-  }
-  return null;
-}
+const resolveThemeCss = createResolver(
+  null,
+  [path.join(process.cwd(), "theme.css"), path.join(__dirname, "html2pptx/playwright/theme.css")],
+  null
+);
 
 /**
  * 入力ファイル名からプレフィックスを生成

@@ -495,7 +495,7 @@ const PATTERNS = {
 /**
  * Create a card definition
  * @param {string} name - Card name
- * @param {'normal'|'good'|'bad'} [variant='normal'] - Card variant
+ * @param {'normal'|'good'|'bad'|'step'} [variant='normal'] - Card variant
  * @returns {CardDef}
  */
 function createCard(name, variant = 'normal') {
@@ -504,6 +504,82 @@ function createCard(name, variant = 'normal') {
     card.variant = variant;
   }
   return card;
+}
+
+/**
+ * Card matcher definitions for declarative card pattern matching
+ * Each matcher defines: pattern, variant, name extractor, optional number extractor, and group compatibility check
+ */
+const CARD_MATCHERS = [
+  {
+    pattern: PATTERNS.card,
+    variant: 'normal',
+    getName: (match) => match[2].trim(),
+    shouldStartNewGroup: (cards) => cards.length > 0 && cards.every(c => c.variant === 'step')
+  },
+  {
+    pattern: PATTERNS.step,
+    variant: 'step',
+    getName: (match) => match[2].trim(),
+    getNumber: (match) => parseInt(match[1], 10),
+    shouldStartNewGroup: (cards) => cards.some(c => c.variant !== 'step')
+  },
+  {
+    pattern: PATTERNS.good,
+    variant: 'good',
+    getName: (match) => match[1].trim(),
+    shouldStartNewGroup: () => false
+  },
+  {
+    pattern: PATTERNS.bad,
+    variant: 'bad',
+    getName: (match) => match[1].trim(),
+    shouldStartNewGroup: () => false
+  }
+];
+
+/**
+ * Find matching card pattern in content
+ * @param {string} content - Content to match against
+ * @returns {{matcher: Object, match: RegExpMatchArray}|null}
+ */
+function findCardMatch(content) {
+  for (const matcher of CARD_MATCHERS) {
+    const match = content.match(matcher.pattern);
+    if (match) return { matcher, match };
+  }
+  return null;
+}
+
+/**
+ * Process a card match and update state
+ * @param {{matcher: Object, match: RegExpMatchArray}} result - Match result from findCardMatch
+ * @param {Object} currentItem - Current composite item
+ * @param {CardDef|null} currentCard - Current card being built
+ * @param {Function} saveCurrentItem - Function to save current item
+ * @returns {{currentItem: Object, currentCard: CardDef}}
+ */
+function processCardMatch(result, currentItem, currentCard, saveCurrentItem) {
+  const { matcher, match } = result;
+
+  const needsNewGroup = !currentItem ||
+    currentItem.type !== 'cards' ||
+    (currentItem.cards.length > 0 && matcher.shouldStartNewGroup(currentItem.cards));
+
+  let newCurrentItem = currentItem;
+  if (needsNewGroup) {
+    saveCurrentItem();
+    newCurrentItem = { type: 'cards', cards: [] };
+  } else if (currentCard) {
+    newCurrentItem = { ...currentItem, cards: [...currentItem.cards, currentCard] };
+  }
+
+  const newCard = createCard(matcher.getName(match), matcher.variant);
+  if (matcher.getNumber) {
+    newCard.number = matcher.getNumber(match);
+  }
+
+  return { currentItem: newCurrentItem, currentCard: newCard };
 }
 
 /**
@@ -577,6 +653,62 @@ function parseCompositeLayout(layoutStr) {
     return { rows: 1, cols: 3 };
   }
   return null;
+}
+
+/**
+ * Element type declarations and their initial item creators
+ * Used to reduce duplication in parseCompositeItems
+ */
+const ELEMENT_TYPE_CREATORS = {
+  bulletList: () => ({ type: 'bulletList', items: [] }),
+  code: () => ({ type: 'code', codeBlock: null }),
+  table: () => ({ type: 'table', tableLines: [] }),
+  flow: () => ({ type: 'flow', flowItems: [] })
+};
+
+/**
+ * Check if content matches an element type declaration and return the type
+ * @param {string} content - Content to check
+ * @returns {string|null} - Element type or null
+ */
+function matchElementType(content) {
+  if (PATTERNS.bulletList.test(content)) return 'bulletList';
+  if (PATTERNS.code.test(content)) return 'code';
+  if (PATTERNS.table.test(content)) return 'table';
+  if (PATTERNS.flow.test(content)) return 'flow';
+  return null;
+}
+
+/**
+ * Handle content at deeper levels within a composite item
+ * @param {Object} currentItem - Current composite item
+ * @param {Object} currentContentItem - Current content item for bullet lists
+ * @param {Object} currentCard - Current card for card items
+ * @param {string} content - Content to add
+ * @param {number} indent - Current indentation
+ * @param {number} baseIndent - Base indentation level
+ * @returns {{currentContentItem: Object}} - Updated content item
+ */
+function handleDeepContent(currentItem, currentContentItem, currentCard, content, indent, baseIndent) {
+  if (!currentItem) return { currentContentItem };
+
+  if (currentItem.type === 'bulletList') {
+    if (indent < baseIndent + 4) {
+      // First level content item
+      const newContentItem = { text: content, subItems: [] };
+      currentItem.items.push(newContentItem);
+      return { currentContentItem: newContentItem };
+    } else if (currentContentItem) {
+      // Sub-item
+      currentContentItem.subItems.push({ text: content, subSubItems: [] });
+    }
+  } else if (currentItem.type === 'flow') {
+    currentItem.flowItems.push(content);
+  } else if (currentItem.type === 'cards' && currentCard) {
+    currentCard.items.push(content);
+  }
+
+  return { currentContentItem };
 }
 
 /**
@@ -702,96 +834,22 @@ function parseCompositeItems(lines, startIndex, baseIndent, depth = 0) {
         }
       }
 
-      // Check for element type declarations
-      if (PATTERNS.bulletList.test(content)) {
+      // Check for element type declarations (bulletList, code, table, flow)
+      const elementType = matchElementType(content);
+      if (elementType) {
         saveCurrentItem();
-        currentItem = { type: 'bulletList', items: [] };
-        currentContentItem = null;
+        currentItem = ELEMENT_TYPE_CREATORS[elementType]();
+        if (elementType === 'bulletList') currentContentItem = null;
         i++;
         continue;
       }
 
-      if (PATTERNS.code.test(content)) {
-        saveCurrentItem();
-        currentItem = { type: 'code', codeBlock: null };
-        i++;
-        continue;
-      }
-
-      if (PATTERNS.table.test(content)) {
-        saveCurrentItem();
-        currentItem = { type: 'table', tableLines: [] };
-        i++;
-        continue;
-      }
-
-      if (PATTERNS.flow.test(content)) {
-        saveCurrentItem();
-        currentItem = { type: 'flow', flowItems: [] };
-        i++;
-        continue;
-      }
-
-      // カードN: カード名
-      // If current cards group has only step cards, start a new group for normal cards
-      const cardMatch = content.match(PATTERNS.card);
-      if (cardMatch) {
-        const hasOnlyStepCards = currentItem && currentItem.type === 'cards' &&
-          currentItem.cards.length > 0 && currentItem.cards.every(c => c.variant === 'step');
-        if (!currentItem || currentItem.type !== 'cards' || hasOnlyStepCards) {
-          saveCurrentItem();
-          currentItem = { type: 'cards', cards: [] };
-        } else if (currentCard) {
-          currentItem.cards.push(currentCard);
-        }
-        currentCard = createCard(cardMatch[2].trim());
-        i++;
-        continue;
-      }
-
-      // ステップN: ラベル (treated as card with variant='step')
-      // If current cards group has non-step cards, start a new group for steps
-      const stepMatch = content.match(PATTERNS.step);
-      if (stepMatch) {
-        const hasNonStepCards = currentItem && currentItem.type === 'cards' &&
-          currentItem.cards.some(c => c.variant !== 'step');
-        if (!currentItem || currentItem.type !== 'cards' || hasNonStepCards) {
-          saveCurrentItem();
-          currentItem = { type: 'cards', cards: [] };
-        } else if (currentCard) {
-          currentItem.cards.push(currentCard);
-        }
-        const stepCard = createCard(stepMatch[2].trim(), 'step');
-        stepCard.number = parseInt(stepMatch[1], 10);
-        currentCard = stepCard;
-        i++;
-        continue;
-      }
-
-      // Good: タイトル (treated as card with variant='good')
-      const goodMatch = content.match(PATTERNS.good);
-      if (goodMatch) {
-        if (!currentItem || currentItem.type !== 'cards') {
-          saveCurrentItem();
-          currentItem = { type: 'cards', cards: [] };
-        } else if (currentCard) {
-          currentItem.cards.push(currentCard);
-        }
-        currentCard = createCard(goodMatch[1].trim(), 'good');
-        i++;
-        continue;
-      }
-
-      // Bad: タイトル (treated as card with variant='bad')
-      const badMatch = content.match(PATTERNS.bad);
-      if (badMatch) {
-        if (!currentItem || currentItem.type !== 'cards') {
-          saveCurrentItem();
-          currentItem = { type: 'cards', cards: [] };
-        } else if (currentCard) {
-          currentItem.cards.push(currentCard);
-        }
-        currentCard = createCard(badMatch[1].trim(), 'bad');
+      // カード系パターン (card, step, good, bad) を統一的に処理
+      const cardMatchResult = findCardMatch(content);
+      if (cardMatchResult) {
+        const result = processCardMatch(cardMatchResult, currentItem, currentCard, saveCurrentItem);
+        currentItem = result.currentItem;
+        currentCard = result.currentCard;
         i++;
         continue;
       }
@@ -799,22 +857,8 @@ function parseCompositeItems(lines, startIndex, baseIndent, depth = 0) {
 
     // Content at deeper levels
     if (indent >= baseIndent + 2) {
-      if (currentItem) {
-        if (currentItem.type === 'bulletList') {
-          if (indent < baseIndent + 4) {
-            // First level content item
-            currentContentItem = { text: content, subItems: [] };
-            currentItem.items.push(currentContentItem);
-          } else if (currentContentItem) {
-            // Sub-item
-            currentContentItem.subItems.push({ text: content, subSubItems: [] });
-          }
-        } else if (currentItem.type === 'flow') {
-          currentItem.flowItems.push(content);
-        } else if (currentItem.type === 'cards' && currentCard) {
-          currentCard.items.push(content);
-        }
-      }
+      const deepResult = handleDeepContent(currentItem, currentContentItem, currentCard, content, indent, baseIndent);
+      currentContentItem = deepResult.currentContentItem;
     }
 
     i++;

@@ -14,25 +14,14 @@
 const pptxgen = require("pptxgenjs");
 const fs = require("fs");
 const path = require("path");
+const { createResolver } = require("./utils/resolve");
 
 // html2pptxのパスを解決
-// 1. 環境変数 HTML2PPTX_PATH
-// 2. プロジェクト内の ./html2pptx
-// 3. スキルのassets内 (このスクリプトと同じディレクトリ)
-function resolveHtml2pptx() {
-  const candidates = [
-    process.env.HTML2PPTX_PATH,
-    path.join(process.cwd(), "html2pptx"),
-    path.join(__dirname, "html2pptx"),
-  ].filter(Boolean);
-
-  for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) {
-      return candidate;
-    }
-  }
-  throw new Error("html2pptx not found. Set HTML2PPTX_PATH or copy html2pptx to project.");
-}
+const resolveHtml2pptx = createResolver(
+  "HTML2PPTX_PATH",
+  [path.join(process.cwd(), "html2pptx"), path.join(__dirname, "html2pptx")],
+  "html2pptx not found. Set HTML2PPTX_PATH or copy html2pptx to project."
+);
 
 const html2pptxPath = resolveHtml2pptx();
 const { html2pptx } = require(html2pptxPath);
