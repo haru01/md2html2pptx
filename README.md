@@ -101,26 +101,138 @@ npm run preview
 
 ## Markdown記法
 
+### 基本記法
+
 | 記法 | 説明 |
 |------|------|
 | `## セクション: タイトル` | スライド定義（例: `## 1.1: 概要`） |
 | `## PART N: タイトル` | タイトルスライド（ダーク背景） |
-| `- リスト:` + 子項目 | 箇条書きリスト |
-| `- カードN: 名前` + 子項目 | カードレイアウト |
-| `- ステップN: ラベル` + 子項目 | ステップ形式 |
+| `- 副題: テキスト` | タイトルスライドの副題 |
+
+### コンテンツ記法
+
+| 記法 | 説明 |
+|------|------|
+| `- リスト:` + 子項目 | 箇条書きリスト（ネスト対応） |
+| `- カードN: 名前` + 子項目 | カードレイアウト（1〜4枚） |
+| `- ステップN: ラベル` + 子項目 | ステップ形式（番号付き） |
 | `- テーブル:` + マークダウン表 | 比較表 |
-| `- フロー:` + 子項目 | フロー図 |
+| `- フロー:` + 子項目 | 横並びフロー図 |
+| `- Good: ラベル` + 子項目 | 推奨カード（緑） |
+| `- Bad: ラベル` + 子項目 | 非推奨カード（赤） |
+
+### コードとダイアグラム
+
+| 記法 | 説明 |
+|------|------|
+| `- コード:` + コードブロック | シンタックスハイライト付きコード |
+| `- Mermaid:` + mermaidコードブロック | Mermaidダイアグラム |
+| ` ```言語 ` + コード + ` ``` ` | 直接コードブロック |
+
+### 複合レイアウト
+
+| 記法 | 説明 |
+|------|------|
+| `- 複合: 1:2` | 左1列、右2列のグリッドレイアウト |
+| `- 複合: 2:1` | 左2列、右1列のグリッドレイアウト |
+| `- 複合: 2:2` | 2x2グリッドレイアウト |
+| `- layout: vertical` | 縦並びレイアウト（ステップ用） |
 
 ## スライドタイプ
 
 | タイプ | トリガー | 説明 |
 |-------|---------|------|
 | `title` | `## PART N: タイトル` | ダーク背景のタイトルスライド |
-| `bulletList` | `- リスト:` | 箇条書きリスト |
+| `bulletList` | `- リスト:` | 箇条書きリスト（3階層まで対応） |
 | `cards` | `- カードN:` | カードレイアウト（自動幅計算） |
+| `goodBad` | `- Good:` / `- Bad:` | 比較カード（推奨/非推奨） |
 | `steps` | `- ステップN:` | ステップ形式（番号付き） |
-| `table` | マークダウンテーブル | 比較表 |
+| `table` | `- テーブル:` + マークダウン表 | 比較表 |
 | `flow` | `- フロー:` | 横並びフロー図 |
+| `code` | `- コード:` + コードブロック | シンタックスハイライト付きコード |
+| `mermaid` | `- Mermaid:` + mermaidブロック | Mermaidダイアグラム（PNG変換） |
+| `composite` | `- 複合: N:M` | グリッドレイアウト |
+
+## 使用例
+
+### 箇条書きリスト（ネスト対応）
+
+```markdown
+## 1.1: 概要
+- リスト:
+  - 第1階層
+    - 第2階層
+      - 第3階層
+  - 別の項目
+```
+
+### カードレイアウト
+
+```markdown
+## 1.2: 3つの機能
+- カード1: 機能A
+  - 説明1
+  - 説明2
+- カード2: 機能B
+  - 説明1
+- カード3: 機能C
+  - 説明1
+```
+
+### Good/Bad 比較
+
+```markdown
+## 1.3: コーディング規約
+- Good: 推奨
+  - 明確な変数名
+  - 一貫したスタイル
+- Bad: 非推奨
+  - 略語の多用
+  - 混在したスタイル
+```
+
+### コードブロック
+
+```markdown
+## 1.4: TypeScriptの例
+
+` ``typescript
+interface User {
+  id: number;
+  name: string;
+}
+` ``
+```
+
+### Mermaidダイアグラム
+
+```markdown
+## 1.5: システム構成
+- Mermaid:
+
+` ``mermaid
+flowchart TD
+    A[フロントエンド] --> B[バックエンド]
+    B --> C[(データベース)]
+` ``
+```
+
+### 複合レイアウト
+
+```markdown
+## 1.6: 比較と図
+- 複合: 1:2
+  - Good: 推奨
+    - 明確な設計
+  - Bad: 非推奨
+    - 曖昧な設計
+  - Mermaid:
+
+` ``mermaid
+flowchart LR
+    A --> B --> C
+` ``
+```
 
 ## フォルダ構成
 
@@ -137,3 +249,29 @@ project/
 - HTMLは960x540px（16:9）で設計されている
 - 複数パートに分けて生成可能: `/md2html2pptx to_pptx part1`
 - 生成後のHTMLは手動編集も可能
+- Mermaidダイアグラムは自動的にPNG画像に変換されPPTXに埋め込まれる
+- コードブロックはHighlight.jsによるシンタックスハイライトが適用される
+
+## ライセンス
+
+MIT License
+
+Copyright (c) 2025
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
