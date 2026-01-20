@@ -1411,4 +1411,94 @@ describe('MD → PPTX 統合テスト', () => {
       expect(shapeCount).toBeGreaterThanOrEqual(3);
     });
   });
+
+  describe('複合スライド（2:2カード + コードブロック）', () => {
+    /**
+     * 複合カード内コードスライド仕様:
+     * - 複合: 2:2 で4カードを2x2グリッドに配置
+     * - 各カードにコードブロックを含む
+     * - コードブロックはカードの説明の一部として表示
+     */
+    let pptxPath;
+    let slideXml;
+
+    beforeAll(async () => {
+      setupTmpDir();
+      const md = fs.readFileSync(
+        path.join(FIXTURES_DIR, 'composite-cards-with-code-slide.md'),
+        'utf-8'
+      );
+      pptxPath = await mdToPptx(md, 'composite-cards-with-code');
+      slideXml = await getSlideXml(pptxPath, 1);
+    }, 120000);
+
+    test('PPTX ファイルが生成される', () => {
+      expect(fs.existsSync(pptxPath)).toBe(true);
+    });
+
+    test('ファイルサイズが妥当', () => {
+      const stats = fs.statSync(pptxPath);
+      expect(stats.size).toBeGreaterThan(10000);
+    });
+
+    test('セクション番号が含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('1.1'))).toBe(true);
+    });
+
+    test('タイトルが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('高度なプロンプト技法'))).toBe(true);
+    });
+
+    test('カード1のタイトルが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('Decomposition'))).toBe(true);
+    });
+
+    test('カード1の説明が含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('大きな問題を小さなサブタスク'))).toBe(true);
+    });
+
+    test('カード1のコードが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('認証機能を分割'))).toBe(true);
+    });
+
+    test('カード2のタイトルが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('Self-Refine'))).toBe(true);
+    });
+
+    test('カード2のコードが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('問題点を指摘'))).toBe(true);
+    });
+
+    test('カード3のタイトルが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('Tree of Thoughts'))).toBe(true);
+    });
+
+    test('カード3のコードが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('3つの異なるアプローチ'))).toBe(true);
+    });
+
+    test('カード4のタイトルが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('Meta Prompting'))).toBe(true);
+    });
+
+    test('カード4のコードが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('最適なプロンプト'))).toBe(true);
+    });
+
+    test('複数の図形が存在する（4カード + タイトル）', () => {
+      const shapeCount = countShapes(slideXml);
+      expect(shapeCount).toBeGreaterThanOrEqual(5);
+    });
+  });
 });

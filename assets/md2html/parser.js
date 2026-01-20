@@ -623,13 +623,21 @@ function parseCompositeItems(lines, startIndex, baseIndent, depth = 0) {
         continue;
       } else {
         inCodeBlock = false;
+        const codeContent = codeBlockLines.join('\n');
         if (currentItem && currentItem.type === 'code') {
+          // Standalone code block
           currentItem.codeBlock = {
             language: codeBlockLang,
-            code: codeBlockLines.join('\n')
+            code: codeContent
           };
           items.push(currentItem);
           currentItem = null;
+        } else if (currentItem && currentItem.type === 'cards' && currentCard) {
+          // Code block inside a card - add as codeBlock property
+          currentCard.codeBlock = {
+            language: codeBlockLang,
+            code: codeContent
+          };
         }
         i++;
         continue;

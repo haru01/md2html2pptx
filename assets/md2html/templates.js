@@ -254,6 +254,8 @@ function generateCardsSlide(slide) {
       margin: 0;
       padding: 0;
       background: transparent;
+      white-space: pre-wrap;
+      word-wrap: break-word;
     }
     .card-code code {
       font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
@@ -1089,6 +1091,20 @@ function generateCompositeGrid(slide, items, rows, cols) {
       font-size: ${Math.max(8, itemFontSize - 1)}px;
       line-height: 1.3;
     }
+    .card-code {
+      background: #1e1e1e;
+      border-radius: ${Math.max(4, borderRadius / 2)}px;
+      padding: ${Math.max(4, padding / 3)}px ${Math.max(6, padding / 2)}px;
+      margin-top: ${Math.max(4, headerMargin / 2)}px;
+      overflow: hidden;
+    }
+    .card-code code {
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: ${Math.max(9, codeFontSize - 1)}px;
+      line-height: 1.3;
+      color: #d4d4d4;
+      white-space: pre-wrap;
+    }
     .inline-card.inline-card-good {
       background: ${COLORS.goodBackground};
     }
@@ -1111,6 +1127,31 @@ function generateCompositeGrid(slide, items, rows, cols) {
       display: flex;
       align-items: flex-start;
       gap: 8px;
+    }
+    .inline-card-step .step-num {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, ${COLORS.primary} 0%, #0E7490 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: ${COLORS.white};
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .inline-card-step .step-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .inline-card-step .step-content h4 {
+      margin: 0 0 2px 0;
+    }
+    .inline-card-step .step-content ul {
+      margin: 0;
+      padding-left: 0;
+      list-style: none;
     }
     /* Variant styles for single grid cells - same as regular cards */
     .grid-cell-card.grid-cell-card-good {
@@ -1234,6 +1275,8 @@ function generateCompositeGrid(slide, items, rows, cols) {
       // Single card - with white card container
       const card = item.cards[0];
       const itemsHtml = card.items.map(i => `          <li>${escapeHtml(i)}</li>`).join('\n');
+      const codeBlockHtml = card.codeBlock ? `
+        <div class="card-code"><pre><code class="language-${escapeHtml(card.codeBlock.language)}">${escapeHtml(card.codeBlock.code)}</code></pre></div>` : '';
 
       const variantClass = card.variant === 'good' ? ' grid-cell-card-good'
         : card.variant === 'bad' ? ' grid-cell-card-bad'
@@ -1243,21 +1286,37 @@ function generateCompositeGrid(slide, items, rows, cols) {
         <h3>${escapeHtml(card.name)}</h3>
         <ul>
 ${itemsHtml}
-        </ul>
+        </ul>${codeBlockHtml}
       </div>`;
     } else {
       // Multiple cards in one cell - render as inline cards
       const cardsHtml = item.cards.map(card => {
         const itemsHtml = card.items.map(i => `            <li>${escapeHtml(i)}</li>`).join('\n');
+        const codeBlockHtml = card.codeBlock ? `
+            <div class="card-code"><code class="language-${escapeHtml(card.codeBlock.language)}">${escapeHtml(card.codeBlock.code)}</code></div>` : '';
+
+        // Handle step variant with step number badge
+        if (card.variant === 'step') {
+          const stepNum = card.number !== undefined ? card.number : '';
+          return `          <div class="inline-card inline-card-step">
+            <div class="step-num">${stepNum}</div>
+            <div class="step-content">
+              <h4>${escapeHtml(card.name)}</h4>
+              <ul>
+${itemsHtml}
+              </ul>${codeBlockHtml}
+            </div>
+          </div>`;
+        }
+
         const cardClass = card.variant === 'good' ? 'inline-card inline-card-good'
           : card.variant === 'bad' ? 'inline-card inline-card-bad'
-            : card.variant === 'step' ? 'inline-card inline-card-step'
-              : 'inline-card';
+            : 'inline-card';
         return `          <div class="${cardClass}">
             <h4>${escapeHtml(card.name)}</h4>
             <ul>
 ${itemsHtml}
-            </ul>
+            </ul>${codeBlockHtml}
           </div>`;
       }).join('\n');
       return `      <div class="grid-cell grid-cell-multi-cards">
