@@ -91,7 +91,20 @@ const CDN_SCRIPTS = {
         startOnLoad: false,
         theme: 'default',
         securityLevel: 'loose',
-        flowchart: { curve: 'basis' }
+        flowchart: { curve: 'basis' },
+        sequence: {
+          useMaxWidth: true,
+          diagramMarginX: 20,
+          diagramMarginY: 20,
+          actorMargin: 60,
+          boxMargin: 10,
+          boxTextMargin: 5,
+          noteMargin: 10,
+          messageMargin: 35
+        },
+        themeVariables: {
+          fontSize: '14px'
+        }
       });
       // Run mermaid and mark SVGs for rasterization
       mermaid.run().then(() => {
@@ -380,6 +393,14 @@ const MERMAID_STYLES = {
     .mermaid {
       margin: 0;
       font-family: inherit;
+      width: 100%;
+      height: 100%;
+    }
+    .mermaid svg {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
     }`,
 
   /**
@@ -406,6 +427,14 @@ const MERMAID_STYLES = {
     .grid-cell-mermaid .mermaid {
       margin: 0;
       font-family: inherit;
+      width: 100%;
+      height: 100%;
+    }
+    .grid-cell-mermaid .mermaid svg {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
     }`
 };
 
