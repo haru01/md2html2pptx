@@ -3,7 +3,6 @@
  *
  * - MD → HTML → PPTX 変換
  * - PPTX 解凍・XML 取得
- * - XML 正規化（フレーク対策）
  */
 
 import fs from 'fs';
@@ -87,60 +86,6 @@ export async function getSlideXml(pptxPath, slideNum = 1) {
   }
 
   return xmlFile.async('string');
-}
-
-/**
- * PPTX ファイルから全スライド XML を取得
- * @param {string} pptxPath - PPTX ファイルパス
- * @returns {Promise<string[]>} スライド XML 文字列の配列
- */
-export async function getAllSlideXmls(pptxPath) {
-  const buffer = fs.readFileSync(pptxPath);
-  const zip = await JSZip.loadAsync(buffer);
-
-  const slideFiles = Object.keys(zip.files)
-    .filter(name => name.match(/^ppt\/slides\/slide\d+\.xml$/))
-    .sort((a, b) => {
-      const numA = parseInt(a.match(/slide(\d+)/)[1]);
-      const numB = parseInt(b.match(/slide(\d+)/)[1]);
-      return numA - numB;
-    });
-
-  const xmls = [];
-  for (const file of slideFiles) {
-    xmls.push(await zip.file(file).async('string'));
-  }
-
-  return xmls;
-}
-
-/**
- * PPTX ファイルの内容一覧を取得
- * @param {string} pptxPath - PPTX ファイルパス
- * @returns {Promise<string[]>} ファイル名の配列
- */
-export async function listPptxContents(pptxPath) {
-  const buffer = fs.readFileSync(pptxPath);
-  const zip = await JSZip.loadAsync(buffer);
-  return Object.keys(zip.files).sort();
-}
-
-/**
- * XML を正規化してフレークテストを防ぐ
- * - タイムスタンプ・動的IDを除去
- * - 座標を丸める
- * @param {string} xml - XML 文字列
- * @returns {string} 正規化された XML
- */
-export function normalizeXml(xml) {
-  return xml
-    // name属性の動的部分を正規化
-    .replace(/name="[^"]*-\d+"/g, 'name="normalized"')
-    // 座標を 10000 EMU 単位で丸める (約 0.11 インチ精度)
-    .replace(/ x="(\d+)"/g, (_, v) => ` x="${Math.round(parseInt(v) / 10000) * 10000}"`)
-    .replace(/ y="(\d+)"/g, (_, v) => ` y="${Math.round(parseInt(v) / 10000) * 10000}"`)
-    .replace(/ cx="(\d+)"/g, (_, v) => ` cx="${Math.round(parseInt(v) / 10000) * 10000}"`)
-    .replace(/ cy="(\d+)"/g, (_, v) => ` cy="${Math.round(parseInt(v) / 10000) * 10000}"`);
 }
 
 /**
