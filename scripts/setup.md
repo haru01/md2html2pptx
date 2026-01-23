@@ -29,7 +29,8 @@ cp <skill-path>/assets/1_mds/sample.md 1_mds/sample.md
 
 ### 3. package.json生成
 
-既存のpackage.jsonがない場合は新規作成:
+既存のpackage.jsonがない場合は新規作成。
+`dependencies` は `<skill-path>/assets/package.json` から読み取ってコピーする:
 
 ```json
 {
@@ -39,21 +40,13 @@ cp <skill-path>/assets/1_mds/sample.md 1_mds/sample.md
     "to_html": "NODE_PATH=$PWD/node_modules node <skill-path>/assets/to_html.js",
     "preview": "NODE_PATH=$PWD/node_modules node <skill-path>/assets/preview.js",
     "to_pptx": "NODE_PATH=$PWD/node_modules node <skill-path>/assets/to_pptx.js",
-    "clean_dev": "rm -rf 2_htmls/* && for f in 1_mds/*.md; do npm run to_html -- \"$f\"; done && npm run to_pptx"
+    "clean_to_html_all": "rm -rf 2_htmls/* && for f in 1_mds/*.md; do npm run to_html -- \"$f\"; done"
   },
-  "dependencies": {
-    "highlight.js": "^11.11.1",
-    "playwright": "^1.40.0",
-    "pptxgenjs": "^3.12.0",
-    "sharp": "^0.34.5"
-  }
+  "dependencies": "<skill-path>/assets/package.json の dependencies をコピー"
 }
 ```
 
-既存のpackage.jsonがある場合は、dependenciesに以下を追加:
-- `playwright`
-- `pptxgenjs`
-- `sharp`
+既存のpackage.jsonがある場合は、`<skill-path>/assets/package.json` の dependencies をマージする。
 
 ### 4. 依存関係インストール
 

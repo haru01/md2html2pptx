@@ -9,52 +9,7 @@ Convert Markdown content to HTML slides, then to PowerPoint presentations.
 
 ## Project Setup
 
-### Minimal Setup (No Copy Required)
-
-スキルのassetsを直接参照して動作:
-
-```bash
-# Create project structure
-mkdir -p 1_mds 2_htmls 3_pptxs
-
-# Create minimal package.json
-cat > package.json << 'EOF'
-{
-  "scripts": {
-    "to_html": "node <skill-path>/assets/to_html.js",
-    "preview": "node <skill-path>/assets/preview.js",
-    "to_pptx": "node <skill-path>/assets/to_pptx.js",
-    "clean_to_html_all": "rm -rf 2_htmls/* && for f in 1_mds/*.md; do npm run to_html -- \"$f\"; done"
-  },
-  "dependencies": {
-    "highlight.js": "^11.11.1",
-    "playwright": "^1.40.0",
-    "pptxgenjs": "^3.12.0",
-    "sharp": "^0.34.5"
-  }
-}
-EOF
-
-# Install
-npm install
-npx playwright install chromium
-```
-
-### Full Setup (Copy to Project)
-
-プロジェクトに全ファイルをコピー:
-
-```bash
-cp -r <skill-path>/assets/html2pptx ./
-cp -r <skill-path>/assets/md2html ./
-cp <skill-path>/assets/package.json ./
-cp <skill-path>/assets/to_html.js ./
-cp <skill-path>/assets/preview.js ./
-cp <skill-path>/assets/to_pptx.js ./
-mkdir -p 1_mds 2_htmls 3_pptxs
-npm install
-npx playwright install chromium
-```
+`/md2html2pptx setup` を実行する。詳細は [setup.md](scripts/setup.md) を参照。
 
 ## Workflow
 
@@ -70,33 +25,6 @@ npx playwright install chromium
 | `/md2html2pptx to_html <file>` | Generate HTML slides from markdown (see [to_html.md](scripts/to_html.md)) |
 | `/md2html2pptx preview` | Preview slides in browser with validation (see [preview.md](scripts/preview.md)) |
 | `/md2html2pptx to_pptx [filter]` | Build PPTX from HTML slides (see [to_pptx.md](scripts/to_pptx.md)) |
-
-## Setup Instructions
-
-`/md2html2pptx setup` を実行すると以下を行う:
-
-1. フォルダ作成: `mkdir -p 1_mds 2_htmls 3_pptxs`
-2. サンプルファイルをコピー: `cp <skill-path>/assets/1_mds/sample.md 1_mds/sample.md`
-3. package.json生成（既存の場合は依存関係を追加）
-4. `npm install` 実行
-5. `npx playwright install chromium` 実行
-6. 使い方を表示
-
-### セットアップ完了メッセージ
-
-```
-✅ セットアップ完了！
-
-📁 作成されたフォルダ:
-   1_mds/    - Markdownファイルを置く (sample.md をコピー済み)
-   2_htmls/  - 生成されたHTMLスライド
-   3_pptxs/  - 生成されたPowerPoint
-
-🚀 使い方:
-   1. /md2html2pptx to_html 1_mds/sample.md  → HTMLスライド生成
-   2. /md2html2pptx preview                  → ブラウザでプレビュー
-   3. /md2html2pptx to_pptx                  → PowerPoint生成
-```
 
 ## Directory Structure
 

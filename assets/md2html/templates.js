@@ -3,14 +3,34 @@
  * Generates html2pptx-compatible HTML slides
  */
 
+const fs = require('fs');
+const path = require('path');
+
 let hljs;
 try {
   hljs = require('highlight.js');
 } catch {
   try {
-    hljs = require(require('path').join(process.cwd(), 'node_modules', 'highlight.js'));
+    hljs = require(path.join(process.cwd(), 'node_modules', 'highlight.js'));
   } catch {
     hljs = null;
+  }
+}
+
+/**
+ * Load mermaid browser bundle from node_modules at build time
+ * The content is inlined into HTML for browser-side rendering
+ */
+let mermaidBundleContent = null;
+try {
+  const mermaidPath = require.resolve('mermaid/dist/mermaid.min.js');
+  mermaidBundleContent = fs.readFileSync(mermaidPath, 'utf-8');
+} catch {
+  try {
+    const mermaidPath = path.join(process.cwd(), 'node_modules', 'mermaid', 'dist', 'mermaid.min.js');
+    mermaidBundleContent = fs.readFileSync(mermaidPath, 'utf-8');
+  } catch {
+    mermaidBundleContent = null;
   }
 }
 
@@ -117,13 +137,9 @@ const SYNTAX_HIGHLIGHT_CSS = `
     .hljs-code { color: #ce9178; }`;
 
 /**
- * CDN Scripts configuration
- * Centralized management of external CDN resources
+ * Mermaid initialization code (runs in browser after mermaid bundle loads)
  */
-const CDN_SCRIPTS = {
-  mermaid: {
-    src: 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js',
-    init: `
+const MERMAID_INIT = `
       mermaid.initialize({
         startOnLoad: false,
         theme: 'default',
@@ -148,21 +164,25 @@ const CDN_SCRIPTS = {
         document.querySelectorAll('.mermaid svg').forEach((svg, i) => {
           svg.setAttribute('data-rasterize', 'mermaid-' + i);
         });
-      });`
-  },
-};
+      });`;
 
 /**
- * Generate CDN script tag with initialization code
- * @param {string} name - CDN script name (e.g., 'mermaid')
+ * Generate mermaid script tags with inlined bundle from node_modules
+ * Falls back to CDN if the local bundle is not available
+ * @param {string} name - Script name (currently only 'mermaid' supported)
  * @returns {string} - HTML script tags or empty string if not found
  */
 function generateCdnScript(name) {
-  const script = CDN_SCRIPTS[name];
-  if (!script) return '';
+  if (name !== 'mermaid') return '';
+  if (mermaidBundleContent) {
+    return `
+    <script>${mermaidBundleContent}<\/script>
+    <script>${MERMAID_INIT}<\/script>`;
+  }
+  // Fallback to CDN if local bundle not found
   return `
-    <script src="${script.src}"><\/script>
-    <script>${script.init}<\/script>`;
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"><\/script>
+    <script>${MERMAID_INIT}<\/script>`;
 }
 
 // Legacy alias for backwards compatibility
