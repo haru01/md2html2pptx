@@ -92,11 +92,19 @@ const MAX_COMPOSITE_DEPTH = 3;
 function splitBySlideHeaders(lines) {
   const chunks = [];
   let currentChunk = null;
+  let inCodeBlock = false;
 
   for (const line of lines) {
-    if (PATTERNS.slideHeader.test(line.trim())) {
+    const trimmed = line.trim();
+
+    // Track code fence boundaries
+    if (PATTERNS.codeBlockMarker.test(trimmed)) {
+      inCodeBlock = !inCodeBlock;
+    }
+
+    if (!inCodeBlock && PATTERNS.slideHeader.test(trimmed)) {
       if (currentChunk) chunks.push(currentChunk);
-      currentChunk = { header: line.trim(), bodyLines: [] };
+      currentChunk = { header: trimmed, bodyLines: [] };
     } else if (currentChunk) {
       currentChunk.bodyLines.push(line);
     }
@@ -146,6 +154,9 @@ function parseSlideHeader(header, index) {
  * @returns {string}
  */
 function detectSlideType(bodyLines) {
+  let hasCards = false;
+  let hasOtherElement = false;
+
   for (const line of bodyLines) {
     const match = line.match(PATTERNS.listItem);
     if (!match) continue;
@@ -153,10 +164,31 @@ function detectSlideType(bodyLines) {
 
     if (PATTERNS.composite.test(content)) return 'composite';
     if (PATTERNS.part.test(content)) return 'title';
-    if (PATTERNS.card.test(content) || PATTERNS.good.test(content) || PATTERNS.bad.test(content) || PATTERNS.step.test(content)) return 'cards';
-    if (PATTERNS.table.test(content)) return 'table';
-    if (PATTERNS.flow.test(content)) return 'flow';
+
+    // Track cards and other element types at top level (indent=0)
+    const indent = match[1].length;
+    if (indent === 0) {
+      if (PATTERNS.card.test(content) || PATTERNS.good.test(content) || PATTERNS.bad.test(content) || PATTERNS.step.test(content)) {
+        hasCards = true;
+      } else if (matchElementType(content)) {
+        hasOtherElement = true;
+      }
+    }
+
+    if (PATTERNS.table.test(content)) {
+      if (hasCards) return 'composite';
+      return 'table';
+    }
+    if (PATTERNS.flow.test(content)) {
+      if (hasCards) return 'composite';
+      return 'flow';
+    }
   }
+
+  // Cards mixed with other element types → treat as composite
+  if (hasCards && hasOtherElement) return 'composite';
+  if (hasCards) return 'cards';
+
   // Check for inline table
   if (bodyLines.some(l => PATTERNS.tableRow.test(l.trim()))) return 'table';
   // Check for code block
@@ -442,7 +474,14 @@ const slideParsers = {
       return match && PATTERNS.composite.test(match[2]);
     });
 
-    if (compositeIndex === -1) return {};
+    if (compositeIndex === -1) {
+      // No explicit 複合: line — implicit composite (e.g., cards + Mermaid mixed)
+      const result = parseCompositeItems(lines, 0, 0, 0);
+      if (result.items.length >= 2) {
+        return { compositeLayout: { rows: 1, cols: result.items.length }, compositeItems: result.items };
+      }
+      return {};
+    }
 
     const match = lines[compositeIndex].match(PATTERNS.listItem);
     const compositeMatch = match[2].match(PATTERNS.composite);
@@ -752,7 +791,7 @@ function parseCompositeItems(lines, startIndex, baseIndent, depth = 0) {
     const trimmed = line.trim();
 
     // Check for slide header - end of composite section
-    if (PATTERNS.slideHeader.test(trimmed)) {
+    if (!inCodeBlock && PATTERNS.slideHeader.test(trimmed)) {
       break;
     }
 

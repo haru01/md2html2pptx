@@ -77,7 +77,13 @@ const SYNTAX_HIGHLIGHT_CSS = `
     .hljs-meta { color: #569cd6; }
     .hljs-selector-tag { color: #d7ba7d; }
     .hljs-selector-class { color: #d7ba7d; }
-    .hljs-selector-id { color: #d7ba7d; }`;
+    .hljs-selector-id { color: #d7ba7d; }
+    .hljs-section { color: #569cd6; font-weight: bold; }
+    .hljs-bullet { color: #6796e6; }
+    .hljs-emphasis { color: #d4d4d4; font-style: italic; }
+    .hljs-strong { color: #d4d4d4; font-weight: bold; }
+    .hljs-quote { color: #6a9955; }
+    .hljs-code { color: #ce9178; }`;
 
 /**
  * CDN Scripts configuration
@@ -1337,13 +1343,13 @@ function calculateGridStyles(rows, cols, items) {
     item.type === 'cards' && item.cards ? Math.max(max, item.cards.length) : max, 1);
 
   const densityFactor = maxCardsInCell > 1 ? Math.min(maxCardsInCell, 2) : 0;
-  const gridFactor = gridSize <= 2 ? 0 : gridSize - 2;
+  const gridFactor = gridSize <= 1 ? 0 : gridSize - 1;
   const scaleFactor = Math.max(densityFactor, gridFactor);
 
   const gap = Math.max(4, 16 - scaleFactor * 2);
   const padding = Math.max(6, 16 - scaleFactor * 2);
   const titleFontSize = Math.max(14, 24 - scaleFactor * 3);
-  const itemFontSize = Math.max(14, 24 - scaleFactor * 3);
+  const itemFontSize = Math.max(14, 20 - scaleFactor * 2);
   const codeFontSize = Math.max(11, Math.round(itemFontSize * 0.75));
   const borderRadius = Math.max(4, 12 - scaleFactor);
   const headerMargin = Math.max(2, 10 - scaleFactor);
