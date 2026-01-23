@@ -38,9 +38,11 @@ cp <skill-path>/assets/1_mds/sample.md 1_mds/sample.md
   "scripts": {
     "to_html": "NODE_PATH=$PWD/node_modules node <skill-path>/assets/to_html.js",
     "preview": "NODE_PATH=$PWD/node_modules node <skill-path>/assets/preview.js",
-    "to_pptx": "NODE_PATH=$PWD/node_modules node <skill-path>/assets/to_pptx.js"
+    "to_pptx": "NODE_PATH=$PWD/node_modules node <skill-path>/assets/to_pptx.js",
+    "clean_dev": "rm -rf 2_htmls/* && for f in 1_mds/*.md; do npm run to_html -- \"$f\"; done && npm run to_pptx"
   },
   "dependencies": {
+    "highlight.js": "^11.11.1",
     "playwright": "^1.40.0",
     "pptxgenjs": "^3.12.0",
     "sharp": "^0.34.5"

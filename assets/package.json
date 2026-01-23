@@ -6,9 +6,11 @@
   "scripts": {
     "to_html": "node to_html.js",
     "preview": "node preview.js",
-    "to_pptx": "node to_pptx.js"
+    "to_pptx": "node to_pptx.js",
+    "clean_dev": "rm -rf 2_htmls/* && for f in 1_mds/*.md; do npm run to_html -- \"$f\"; done && npm run preview -- --no-open"
   },
   "dependencies": {
+    "highlight.js": "^11.11.1",
     "playwright": "^1.40.0",
     "pptxgenjs": "^3.12.0",
     "sharp": "^0.34.5"

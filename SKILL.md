@@ -23,9 +23,15 @@ cat > package.json << 'EOF'
   "scripts": {
     "to_html": "node <skill-path>/assets/to_html.js",
     "preview": "node <skill-path>/assets/preview.js",
-    "to_pptx": "NODE_PATH=$PWD/node_modules node <skill-path>/assets/to_pptx.js"
+    "to_pptx": "node <skill-path>/assets/to_pptx.js",
+    "clean_to_html_all": "rm -rf 2_htmls/* && for f in 1_mds/*.md; do npm run to_html -- \"$f\"; done"
   },
-  "dependencies": { "playwright": "^1.40.0", "pptxgenjs": "^3.12.0", "sharp": "^0.34.5" }
+  "dependencies": {
+    "highlight.js": "^11.11.1",
+    "playwright": "^1.40.0",
+    "pptxgenjs": "^3.12.0",
+    "sharp": "^0.34.5"
+  }
 }
 EOF
 
