@@ -6,11 +6,12 @@
  * - XML 正規化（フレーク対策）
  */
 
-import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import JSZip from 'jszip';
+import { convertMdToHtml } from '../../to_html_core.mjs';
+import { convertHtmlToPptx } from '../../to_pptx_core.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,23 +51,24 @@ export async function mdToPptx(mdContent, filename = 'test') {
   const mdPath = path.join(TMP_DIR, '1_mds', `${filename}.md`);
   fs.writeFileSync(mdPath, mdContent);
 
+  const htmlDir = path.join(TMP_DIR, '2_htmls');
+  const pptxPath = path.join(TMP_DIR, '3_pptxs', 'presentation.pptx');
+
   // MD → HTML
-  execSync(`node "${path.join(ASSETS_DIR, 'to_html.js')}" "${mdPath}"`, {
-    cwd: TMP_DIR,
-    stdio: 'pipe'
+  await convertMdToHtml({
+    inputPath: mdPath,
+    outputDir: htmlDir,
+    assetsDir: ASSETS_DIR,
   });
 
   // HTML → PPTX
-  execSync(`node "${path.join(ASSETS_DIR, 'to_pptx.js')}"`, {
-    cwd: TMP_DIR,
-    stdio: 'pipe',
-    env: {
-      ...process.env,
-      HTML2PPTX_PATH: path.join(ASSETS_DIR, 'html2pptx')
-    }
+  await convertHtmlToPptx({
+    slidesDir: htmlDir,
+    outputPath: pptxPath,
+    assetsDir: ASSETS_DIR,
   });
 
-  return path.join(TMP_DIR, '3_pptxs', 'presentation.pptx');
+  return pptxPath;
 }
 
 /**
