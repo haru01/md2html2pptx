@@ -1683,4 +1683,280 @@ describe('MD → PPTX 統合テスト', () => {
       expect(texts.some(t => t.includes('-->'))).toBe(false);
     });
   });
+
+  describe('3列レイアウト（1:1:1）', () => {
+    /**
+     * 3列レイアウト仕様:
+     * - 複合: 1:1:1 で3カラムグリッドを定義
+     * - parser の 3パートレイアウト分岐を検証
+     */
+    let pptxPath;
+    let slideXml;
+
+    beforeAll(async () => {
+      setupTmpDir();
+      const md = fs.readFileSync(
+        path.join(FIXTURES_DIR, 'composite-1x1x1-slide.md'),
+        'utf-8'
+      );
+      pptxPath = await mdToPptx(md, 'composite-1x1x1');
+      slideXml = await getSlideXml(pptxPath, 1);
+    }, 120000);
+
+    test('PPTX ファイルが生成される', () => {
+      expect(fs.existsSync(pptxPath)).toBe(true);
+    });
+
+    test('セクション番号が含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('1.1'))).toBe(true);
+    });
+
+    test('タイトルが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('3列グリッド'))).toBe(true);
+    });
+
+    test('左カラムのカードが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('左カラム'))).toBe(true);
+      expect(texts.some(t => t.includes('左の項目1'))).toBe(true);
+    });
+
+    test('中央カラムのカードが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('中央カラム'))).toBe(true);
+      expect(texts.some(t => t.includes('中央の項目1'))).toBe(true);
+    });
+
+    test('右カラムのカードが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('右カラム'))).toBe(true);
+      expect(texts.some(t => t.includes('右の項目1'))).toBe(true);
+    });
+
+    test('3つ以上の図形が存在する', () => {
+      const shapeCount = countShapes(slideXml);
+      expect(shapeCount).toBeGreaterThanOrEqual(3);
+    });
+  });
+
+  describe('ネスト複合内リスト', () => {
+    /**
+     * ネスト複合内リスト仕様:
+     * - ネストされた複合内で bulletList タイプを描画
+     * - generateNestedGridHtml の bulletList 分岐を検証
+     */
+    let pptxPath;
+    let slideXml;
+
+    beforeAll(async () => {
+      setupTmpDir();
+      const md = fs.readFileSync(
+        path.join(FIXTURES_DIR, 'composite-nested-list-slide.md'),
+        'utf-8'
+      );
+      pptxPath = await mdToPptx(md, 'composite-nested-list');
+      slideXml = await getSlideXml(pptxPath, 1);
+    }, 120000);
+
+    test('PPTX ファイルが生成される', () => {
+      expect(fs.existsSync(pptxPath)).toBe(true);
+    });
+
+    test('タイトルが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('ネスト内リスト'))).toBe(true);
+    });
+
+    test('ネスト内リスト項目が含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('ネスト項目1'))).toBe(true);
+      expect(texts.some(t => t.includes('ネスト項目2'))).toBe(true);
+    });
+
+    test('ネスト内カードが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('右側'))).toBe(true);
+    });
+
+    test('外側のカードが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('セルB'))).toBe(true);
+      expect(texts.some(t => t.includes('セルC'))).toBe(true);
+      expect(texts.some(t => t.includes('セルD'))).toBe(true);
+    });
+  });
+
+  describe('グリッド内テーブル', () => {
+    /**
+     * グリッド内テーブル仕様:
+     * - 2x2グリッドのセルにテーブルを配置
+     * - generateGridTableCell 関数を検証
+     */
+    let pptxPath;
+    let slideXml;
+
+    beforeAll(async () => {
+      setupTmpDir();
+      const md = fs.readFileSync(
+        path.join(FIXTURES_DIR, 'composite-grid-table-slide.md'),
+        'utf-8'
+      );
+      pptxPath = await mdToPptx(md, 'composite-grid-table');
+      slideXml = await getSlideXml(pptxPath, 1);
+    }, 120000);
+
+    test('PPTX ファイルが生成される', () => {
+      expect(fs.existsSync(pptxPath)).toBe(true);
+    });
+
+    test('タイトルが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('テーブルを含む2x2'))).toBe(true);
+    });
+
+    test('テーブルヘッダーが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('名前'))).toBe(true);
+      expect(texts.some(t => t.includes('スコア'))).toBe(true);
+    });
+
+    test('テーブルデータが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('Alice'))).toBe(true);
+      expect(texts.some(t => t.includes('95'))).toBe(true);
+    });
+
+    test('カードも含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('概要'))).toBe(true);
+      expect(texts.some(t => t.includes('補足'))).toBe(true);
+    });
+  });
+
+  describe('グリッド内フロー', () => {
+    /**
+     * グリッド内フロー仕様:
+     * - 2x2グリッドのセルにフローを配置
+     * - generateGridFlowCell 関数を検証
+     */
+    let pptxPath;
+    let slideXml;
+
+    beforeAll(async () => {
+      setupTmpDir();
+      const md = fs.readFileSync(
+        path.join(FIXTURES_DIR, 'composite-grid-flow-slide.md'),
+        'utf-8'
+      );
+      pptxPath = await mdToPptx(md, 'composite-grid-flow');
+      slideXml = await getSlideXml(pptxPath, 1);
+    }, 120000);
+
+    test('PPTX ファイルが生成される', () => {
+      expect(fs.existsSync(pptxPath)).toBe(true);
+    });
+
+    test('タイトルが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('フローを含む2x2'))).toBe(true);
+    });
+
+    test('フロー項目が含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('入力'))).toBe(true);
+      expect(texts.some(t => t.includes('処理'))).toBe(true);
+      expect(texts.some(t => t.includes('出力'))).toBe(true);
+    });
+
+    test('カードも含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('前提条件'))).toBe(true);
+      expect(texts.some(t => t.includes('結果'))).toBe(true);
+      expect(texts.some(t => t.includes('考察'))).toBe(true);
+    });
+  });
+
+  describe('空セル埋め（アイテム不足）', () => {
+    /**
+     * 空セル埋め仕様:
+     * - 2x2グリッドに1アイテムのみ → 残り3セルを空で埋める
+     * - grid-cell の空セル生成を検証
+     */
+    let pptxPath;
+    let slideXml;
+
+    beforeAll(async () => {
+      setupTmpDir();
+      const md = fs.readFileSync(
+        path.join(FIXTURES_DIR, 'composite-sparse-slide.md'),
+        'utf-8'
+      );
+      pptxPath = await mdToPptx(md, 'composite-sparse');
+      slideXml = await getSlideXml(pptxPath, 1);
+    }, 120000);
+
+    test('PPTX ファイルが生成される', () => {
+      expect(fs.existsSync(pptxPath)).toBe(true);
+    });
+
+    test('タイトルが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('1アイテムのみ'))).toBe(true);
+    });
+
+    test('カード内容が含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('唯一のカード'))).toBe(true);
+      expect(texts.some(t => t.includes('唯一の説明1'))).toBe(true);
+    });
+
+    test('図形が存在する', () => {
+      const shapeCount = countShapes(slideXml);
+      expect(shapeCount).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe('ネスト複合内コード（非カード型）', () => {
+    /**
+     * ネスト複合内コード仕様:
+     * - ネストされた複合内でコードブロックを配置
+     * - generateNestedGridHtml の else 分岐（空セル）を検証
+     */
+    let pptxPath;
+    let slideXml;
+
+    beforeAll(async () => {
+      setupTmpDir();
+      const md = fs.readFileSync(
+        path.join(FIXTURES_DIR, 'composite-nested-code-slide.md'),
+        'utf-8'
+      );
+      pptxPath = await mdToPptx(md, 'composite-nested-code');
+      slideXml = await getSlideXml(pptxPath, 1);
+    }, 120000);
+
+    test('PPTX ファイルが生成される', () => {
+      expect(fs.existsSync(pptxPath)).toBe(true);
+    });
+
+    test('タイトルが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('ネスト内コード'))).toBe(true);
+    });
+
+    test('ネスト内カードが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('説明'))).toBe(true);
+      expect(texts.some(t => t.includes('コードの解説'))).toBe(true);
+    });
+
+    test('外側のカードが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('セルB'))).toBe(true);
+      expect(texts.some(t => t.includes('セルC'))).toBe(true);
+      expect(texts.some(t => t.includes('セルD'))).toBe(true);
+    });
+  });
 });
