@@ -3,6 +3,37 @@
  * Generates html2pptx-compatible HTML slides
  */
 
+let hljs;
+try {
+  hljs = require('highlight.js');
+} catch {
+  try {
+    hljs = require(require('path').join(process.cwd(), 'node_modules', 'highlight.js'));
+  } catch {
+    hljs = null;
+  }
+}
+
+/**
+ * Highlight code at build time using highlight.js
+ * Returns HTML with <span class="hljs-*"> wrappers (already escaped)
+ * Falls back to escapeHtml if highlight.js is not available
+ * @param {string} code - Raw code string
+ * @param {string} language - Language identifier
+ * @returns {string} - Highlighted HTML
+ */
+function highlightCode(code, language) {
+  if (!hljs) return escapeHtml(code);
+  try {
+    if (language && hljs.getLanguage(language)) {
+      return hljs.highlight(code, { language }).value;
+    }
+    return hljs.highlightAuto(code).value;
+  } catch (e) {
+    return escapeHtml(code);
+  }
+}
+
 // Default theme configuration (new unified structure)
 const DEFAULT_THEME = {
   fonts: {
@@ -119,15 +150,11 @@ const CDN_SCRIPTS = {
         });
       });`
   },
-  hljs: {
-    src: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js',
-    init: 'hljs.highlightAll();'
-  }
 };
 
 /**
  * Generate CDN script tag with initialization code
- * @param {string} name - CDN script name (e.g., 'mermaid', 'hljs')
+ * @param {string} name - CDN script name (e.g., 'mermaid')
  * @returns {string} - HTML script tags or empty string if not found
  */
 function generateCdnScript(name) {
@@ -165,7 +192,7 @@ function getCodeBlockRenderType(codeBlock) {
 /**
  * Determine required CDN scripts for a list of items
  * @param {Array} items - Array of composite items
- * @returns {Set<string>} - Set of required script names ('mermaid', 'hljs')
+ * @returns {Set<string>} - Set of required script names ('mermaid')
  */
 function getRequiredScripts(items) {
   const scripts = new Set();
@@ -174,7 +201,6 @@ function getRequiredScripts(items) {
     if (item.type === 'code' && item.codeBlock) {
       const renderType = getCodeBlockRenderType(item.codeBlock);
       if (renderType === 'mermaid') scripts.add('mermaid');
-      if (renderType === 'code') scripts.add('hljs');
     }
   }
 
@@ -482,6 +508,7 @@ function wrapWithBase(styleContent, bodyContent, bodyBackground = null) {
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="theme.css">
   <style>
     ${cssVars}
@@ -766,7 +793,7 @@ function generateCardsSlide(slide) {
     const items = card.items.map(item => `          <li>${processInlineCode(item)}</li>`).join('\n');
     const codeBlockHtml = card.codeBlock ? `
         <div class="card-code">
-          <pre><code class="language-${escapeHtml(card.codeBlock.language)}">${escapeHtml(card.codeBlock.code)}</code></pre>
+          <pre><code class="language-${escapeHtml(card.codeBlock.language)}">${highlightCode(card.codeBlock.code, card.codeBlock.language)}</code></pre>
         </div>` : '';
 
     // Handle step variant
@@ -792,12 +819,10 @@ ${items}
       </div>`;
   }).join('\n');
 
-  const hljsScript = hasCodeBlock ? generateCdnScript('hljs') : '';
-
   const body = `${section}    <h1>${escapeHtml(title)}</h1>
     <div class="cards">
 ${cardsHtml}
-    </div>${hljsScript}`;
+    </div>`;
 
   return wrapWithBase(style, body);
 }
@@ -1074,13 +1099,12 @@ function generateCodeSlide(slide) {
   const section = slide.section ? `    <p class="section-num">${escapeHtml(slide.section)}</p>\n` : '';
   const title = slide.title || slide.name;
 
-  // For code, we escape HTML but preserve the structure for highlight.js
-  const escapedCode = escapeHtml(codeBlock.code);
+  const highlightedCode = highlightCode(codeBlock.code, lang);
 
   const body = `${section}    <h1>${escapeHtml(title)}</h1>
     <div class="code-container">
-      <pre><code class="language-${escapeHtml(lang)}">${escapedCode}</code></pre>
-    </div>${generateCdnScript('hljs')}`;
+      <pre><code class="language-${escapeHtml(lang)}">${highlightedCode}</code></pre>
+    </div>`;
 
   return wrapWithBase(style, body);
 }
@@ -1263,12 +1287,12 @@ function generateCompositeCodeHtmlWithDepth(codeBlock, depth) {
   }
 
   const lang = codeBlock.language || 'plaintext';
-  const escapedCode = escapeHtml(codeBlock.code);
+  const highlightedCode = highlightCode(codeBlock.code, lang);
   const fontSize = Math.round(13 * Math.pow(0.9, depth));
   const padding = Math.round(16 * Math.pow(0.9, depth));
 
   return `        <div class="code-container" style="padding: ${padding}px; font-size: ${fontSize}px;">
-          <pre><code class="language-${escapeHtml(lang)}">${escapedCode}</code></pre>
+          <pre><code class="language-${escapeHtml(lang)}">${highlightedCode}</code></pre>
         </div>`;
 }
 
@@ -1699,7 +1723,7 @@ function generateCompositeGrid(slide, items, rows, cols) {
       const card = item.cards[0];
       const itemsHtml = card.items.map(i => `          <li>${escapeHtml(i)}</li>`).join('\n');
       const codeBlockHtml = card.codeBlock ? `
-        <div class="card-code"><pre><code class="language-${escapeHtml(card.codeBlock.language)}">${escapeHtml(card.codeBlock.code)}</code></pre></div>` : '';
+        <div class="card-code"><pre><code class="language-${escapeHtml(card.codeBlock.language)}">${highlightCode(card.codeBlock.code, card.codeBlock.language)}</code></pre></div>` : '';
 
       const variantClass = card.variant === 'good' ? ' grid-cell-card-good'
         : card.variant === 'bad' ? ' grid-cell-card-bad'
@@ -1716,7 +1740,7 @@ ${itemsHtml}
       const cardsHtml = item.cards.map(card => {
         const itemsHtml = card.items.map(i => `            <li>${escapeHtml(i)}</li>`).join('\n');
         const codeBlockHtml = card.codeBlock ? `
-            <div class="card-code"><code class="language-${escapeHtml(card.codeBlock.language)}">${escapeHtml(card.codeBlock.code)}</code></div>` : '';
+            <div class="card-code"><code class="language-${escapeHtml(card.codeBlock.language)}">${highlightCode(card.codeBlock.code, card.codeBlock.language)}</code></div>` : '';
 
         // Handle step variant with step number badge
         if (card.variant === 'step') {
@@ -1776,9 +1800,9 @@ ${itemsHtml}
       </div>`;
       }
       const lang = item.codeBlock.language || 'plaintext';
-      const escapedCode = escapeHtml(item.codeBlock.code);
+      const highlightedCode = highlightCode(item.codeBlock.code, lang);
       return `      <div class="grid-cell grid-cell-code">
-        <pre><code class="language-${escapeHtml(lang)}">${escapedCode}</code></pre>
+        <pre><code class="language-${escapeHtml(lang)}">${highlightedCode}</code></pre>
       </div>`;
     } else if (item.type === 'table' && item.table) {
       return generateGridTableCell(item.table);
@@ -1795,13 +1819,12 @@ ${itemsHtml}
 
   // Determine required CDN scripts (check both original items and expanded items)
   const requiredScripts = getRequiredScripts([...items, ...expandedItems]);
-  const hljsScript = requiredScripts.has('hljs') ? generateCdnScript('hljs') : '';
   const mermaidScript = requiredScripts.has('mermaid') ? generateCdnScript('mermaid') : '';
 
   const body = `${section}    <h1>${escapeHtml(title)}</h1>
     <div class="grid-container">
 ${filledCells}
-    </div>${hljsScript}${mermaidScript}`;
+    </div>${mermaidScript}`;
 
   return wrapWithBase(style, body);
 }
