@@ -1992,61 +1992,61 @@ describe('MD → PPTX 統合テスト', () => {
 
     test('タイトルが含まれる', () => {
       const texts = extractTexts(slideXml);
-      expect(texts.some(t => t.includes('リーンキャンバス'))).toBe(true);
+      expect(texts.some(t => t.includes('推し活サポートアプリ'))).toBe(true);
     });
 
     test('課題セクションが含まれる', () => {
       const texts = extractTexts(slideXml);
       expect(texts.some(t => t.includes('課題'))).toBe(true);
-      expect(texts.some(t => t.includes('既存ツールが複雑すぎる'))).toBe(true);
+      expect(texts.some(t => t.includes('複数SNSの巡回が大変'))).toBe(true);
     });
 
     test('ソリューションセクションが含まれる', () => {
       const texts = extractTexts(slideXml);
       expect(texts.some(t => t.includes('ソリューション'))).toBe(true);
-      expect(texts.some(t => t.includes('シンプルなUI'))).toBe(true);
+      expect(texts.some(t => t.includes('推し情報の一括通知'))).toBe(true);
     });
 
     test('独自の価値提案セクションが含まれる', () => {
       const texts = extractTexts(slideXml);
       expect(texts.some(t => t.includes('独自の価値提案'))).toBe(true);
-      expect(texts.some(t => t.includes('誰でも5分で使える'))).toBe(true);
+      expect(texts.some(t => t.includes('推し活を一つのアプリで完結'))).toBe(true);
     });
 
     test('競合優位性セクションが含まれる', () => {
       const texts = extractTexts(slideXml);
       expect(texts.some(t => t.includes('競合優位性'))).toBe(true);
-      expect(texts.some(t => t.includes('特許技術'))).toBe(true);
+      expect(texts.some(t => t.includes('推し専用の通知アルゴリズム'))).toBe(true);
     });
 
     test('顧客セグメントセクションが含まれる', () => {
       const texts = extractTexts(slideXml);
       expect(texts.some(t => t.includes('顧客セグメント'))).toBe(true);
-      expect(texts.some(t => t.includes('中小企業の経営者'))).toBe(true);
+      expect(texts.some(t => t.includes('アイドル・Vtuberのファン'))).toBe(true);
     });
 
     test('主要指標セクションが含まれる', () => {
       const texts = extractTexts(slideXml);
       expect(texts.some(t => t.includes('主要指標'))).toBe(true);
-      expect(texts.some(t => t.includes('MAU'))).toBe(true);
+      expect(texts.some(t => t.includes('DAU'))).toBe(true);
     });
 
     test('チャネルセクションが含まれる', () => {
       const texts = extractTexts(slideXml);
       expect(texts.some(t => t.includes('チャネル'))).toBe(true);
-      expect(texts.some(t => t.includes('Web広告'))).toBe(true);
+      expect(texts.some(t => t.includes('X(Twitter)広告'))).toBe(true);
     });
 
     test('コスト構造セクションが含まれる', () => {
       const texts = extractTexts(slideXml);
       expect(texts.some(t => t.includes('コスト構造'))).toBe(true);
-      expect(texts.some(t => t.includes('サーバー費用'))).toBe(true);
+      expect(texts.some(t => t.includes('API連携費用'))).toBe(true);
     });
 
     test('収益の流れセクションが含まれる', () => {
       const texts = extractTexts(slideXml);
       expect(texts.some(t => t.includes('収益の流れ'))).toBe(true);
-      expect(texts.some(t => t.includes('月額サブスク'))).toBe(true);
+      expect(texts.some(t => t.includes('プレミアム月額500円'))).toBe(true);
     });
 
     test('複数の図形が存在する（9セクション + タイトル）', () => {
@@ -2087,7 +2087,7 @@ describe('MD → PPTX 統合テスト', () => {
 
     test('タイトルが含まれる', () => {
       const texts = extractTexts(slideXml);
-      expect(texts.some(t => t.includes('仮説検証タイムライン'))).toBe(true);
+      expect(texts.some(t => t.includes('推し活サポートアプリ'))).toBe(true);
     });
 
     test('2024-01のデータが含まれる', () => {
@@ -2099,13 +2099,13 @@ describe('MD → PPTX 統合テスト', () => {
     test('2024-02のデータが含まれる', () => {
       const texts = extractTexts(slideXml);
       expect(texts.some(t => t.includes('2024-02'))).toBe(true);
-      expect(texts.some(t => t.includes('ピボット'))).toBe(true);
+      expect(texts.some(t => t.includes('カレンダー連携'))).toBe(true);
     });
 
     test('2024-03のデータが含まれる', () => {
       const texts = extractTexts(slideXml);
       expect(texts.some(t => t.includes('2024-03'))).toBe(true);
-      expect(texts.some(t => t.includes('フリーミアム'))).toBe(true);
+      expect(texts.some(t => t.includes('クローズドコミュニティ'))).toBe(true);
     });
 
     test('テーブル要素が存在する', () => {

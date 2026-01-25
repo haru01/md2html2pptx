@@ -14,9 +14,9 @@ const DATE_KEY_PATTERN = /^(\d{4}-\d{2})[:：]?\s*$/;
  * Field patterns for experiment items (in display order)
  */
 const FIELD_PATTERNS = [
-  { key: 'customerJob', pattern: /^顧客の仕事[:：]\s*(.+)$/, label: '顧客の仕事' },
+  { key: 'customerJob', pattern: /^顧客の行動仮説[:：]\s*(.+)$/, label: '顧客の行動仮説' },
   { key: 'problemHypothesis', pattern: /^課題仮説[:：]\s*(.+)$/, label: '課題仮説' },
-  { key: 'solutionHypothesis', pattern: /^解決策仮説[:：]\s*(.+)$/, label: '解決策仮説' },
+  { key: 'solutionHypothesis', pattern: /^価値or解決法仮説[:：]\s*(.+)$/, label: '価値or解決法仮説' },
   { key: 'assumption', pattern: /^前提[:：]\s*(.+)$/, label: '前提' },
   { key: 'methodAndCriteria', pattern: /^検証方法と達成基準[:：]\s*(.+)$/, label: '検証方法と達成基準' },
   { key: 'result', pattern: /^結果[:：]\s*(.+)$/, label: '結果' },
