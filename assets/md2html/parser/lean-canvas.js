@@ -17,7 +17,7 @@ function parseLeanCanvas(lines) {
     { key: 'advantage', pattern: PATTERNS.leanCanvasAdvantage, label: '競合優位性' },
     { key: 'customer', pattern: PATTERNS.leanCanvasCustomer, label: '顧客セグメント' },
     { key: 'metrics', pattern: PATTERNS.leanCanvasMetrics, label: '主要指標' },
-    { key: 'channels', pattern: PATTERNS.leanCanvasChannels, label: '顧客との接点' },
+    { key: 'channels', pattern: PATTERNS.leanCanvasChannels, label: 'チャネル' },
     { key: 'cost', pattern: PATTERNS.leanCanvasCost, label: 'コスト構造' },
     { key: 'revenue', pattern: PATTERNS.leanCanvasRevenue, label: '収益の流れ' },
   ];

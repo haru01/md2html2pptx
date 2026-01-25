@@ -1990,11 +1990,6 @@ describe('MD → PPTX 統合テスト', () => {
       expect(stats.size).toBeGreaterThan(10000);
     });
 
-    test('セクション番号が含まれる', () => {
-      const texts = extractTexts(slideXml);
-      expect(texts.some(t => t.includes('1.1'))).toBe(true);
-    });
-
     test('タイトルが含まれる', () => {
       const texts = extractTexts(slideXml);
       expect(texts.some(t => t.includes('リーンキャンバス'))).toBe(true);

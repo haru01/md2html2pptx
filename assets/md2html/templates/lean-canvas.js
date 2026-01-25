@@ -23,7 +23,7 @@ function generateLeanCanvasSlide(slide) {
     { key: 'advantage', label: '競合優位性', gridArea: 'advantage' },
     { key: 'customer', label: '顧客セグメント', gridArea: 'customer' },
     { key: 'metrics', label: '主要指標', gridArea: 'metrics' },
-    { key: 'channels', label: '顧客との接点', gridArea: 'channels' },
+    { key: 'channels', label: 'チャネル', gridArea: 'channels' },
     { key: 'cost', label: 'コスト構造', gridArea: 'cost' },
     { key: 'revenue', label: '収益の流れ', gridArea: 'revenue' },
   ];
