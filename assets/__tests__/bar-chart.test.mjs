@@ -178,6 +178,57 @@ describe('parseBarChart', () => {
     });
   });
 
+  describe('ハイライト（太字でアクセントカラー）', () => {
+    test('太字のラベルをハイライトとして検出できる', () => {
+      const lines = [
+        '- 棒グラフ:',
+        '  | 月 | 売上 |',
+        '  |------|------|',
+        '  | 1月 | 120 |',
+        '  | **2月** | 150 |',
+        '  | 3月 | 180 |',
+      ];
+
+      const result = parseBarChart(lines);
+
+      expect(result.barChart).toBeDefined();
+      expect(result.barChart.labels).toEqual(['1月', '2月', '3月']);
+      expect(result.barChart.highlights).toEqual([false, true, false]);
+    });
+
+    test('複数のラベルをハイライトできる', () => {
+      const lines = [
+        '- 棒グラフ:',
+        '  | 月 | 売上 |',
+        '  |------|------|',
+        '  | **1月** | 120 |',
+        '  | 2月 | 150 |',
+        '  | **3月** | 180 |',
+      ];
+
+      const result = parseBarChart(lines);
+
+      expect(result.barChart).toBeDefined();
+      expect(result.barChart.labels).toEqual(['1月', '2月', '3月']);
+      expect(result.barChart.highlights).toEqual([true, false, true]);
+    });
+
+    test('ハイライトなしの場合はすべてfalse', () => {
+      const lines = [
+        '- 棒グラフ:',
+        '  | 月 | 売上 |',
+        '  |------|------|',
+        '  | 1月 | 120 |',
+        '  | 2月 | 150 |',
+      ];
+
+      const result = parseBarChart(lines);
+
+      expect(result.barChart).toBeDefined();
+      expect(result.barChart.highlights).toEqual([false, false]);
+    });
+  });
+
   describe('実際のMarkdownファイル形式', () => {
     test('サンプルファイルの形式（横棒グラフ）をパースできる', () => {
       const lines = [

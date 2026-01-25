@@ -105,6 +105,7 @@
  * @typedef {Object} BarChartDef
  * @property {string[]} labels - X-axis labels (categories)
  * @property {number[]} values - Y-axis values
+ * @property {boolean[]} [highlights] - Highlight flags for each bar (accent color)
  * @property {'vertical'|'horizontal'} [orientation] - Chart orientation (default: 'vertical')
  * @property {string} [xAxisLabel] - X-axis label
  * @property {string} [yAxisLabel] - Y-axis label

@@ -39,28 +39,33 @@ function getD3Script() {
  * @param {Object} config - Chart configuration
  * @param {string[]} config.labels - Category labels
  * @param {number[]} config.values - Data values
+ * @param {boolean[]} [config.highlights] - Highlight flags for each bar
  * @param {'vertical'|'horizontal'} config.orientation - Chart orientation
  * @param {string} [config.xAxisLabel] - X-axis label
  * @param {string} [config.yAxisLabel] - Y-axis label
  * @param {boolean} [config.showValues] - Show values on bars
  * @param {string} config.primaryColor - Primary theme color
+ * @param {string} config.highlightColor - Highlight color for emphasized bars
  * @returns {string} - JavaScript code for D3 bar chart
  */
 function generateD3BarChartCode(config) {
   const {
     labels,
     values,
+    highlights = [],
     orientation,
     xAxisLabel,
     yAxisLabel,
     showValues,
     primaryColor,
+    highlightColor,
   } = config;
 
   const dataJson = JSON.stringify(
     labels.map((label, i) => ({
       label,
       value: values[i],
+      highlight: highlights[i] || false,
     }))
   );
 
@@ -97,7 +102,7 @@ function generateD3BarChartCode(config) {
         .attr("y", d => y(d.value))
         .attr("width", x.bandwidth())
         .attr("height", d => height - y(d.value))
-        .attr("fill", "${primaryColor}");
+        .style("fill", d => d.highlight ? "${highlightColor}" : "${primaryColor}");
       ${
         showValues
           ? `
@@ -145,7 +150,7 @@ function generateD3BarChartCode(config) {
         .attr("y", d => y(d.label))
         .attr("width", d => x(d.value))
         .attr("height", y.bandwidth())
-        .attr("fill", "${primaryColor}");
+        .style("fill", d => d.highlight ? "${highlightColor}" : "${primaryColor}");
       ${
         showValues
           ? `

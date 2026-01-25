@@ -75,15 +75,31 @@ function parseBarChart(lines) {
   const tableData = parseTable.parseTableFromLines(tableLines);
   if (!tableData.headers || tableData.headers.length < 2) return {};
 
-  // Extract labels and values from table
-  // First column = labels, second column = values
-  const labels = tableData.rows.map((row) => row[0] || '');
+  // Extract labels, values, and highlights from table
+  // First column = labels (bold = highlight), second column = values
+  const boldPattern = /^\*\*(.+)\*\*$/;
+  const labels = [];
+  const highlights = [];
+
+  for (const row of tableData.rows) {
+    const rawLabel = row[0] || '';
+    const boldMatch = rawLabel.match(boldPattern);
+    if (boldMatch) {
+      labels.push(boldMatch[1]);
+      highlights.push(true);
+    } else {
+      labels.push(rawLabel);
+      highlights.push(false);
+    }
+  }
+
   const values = tableData.rows.map((row) => parseFloat(row[1]) || 0);
 
   return {
     barChart: {
       labels,
       values,
+      highlights,
       ...options,
     },
   };

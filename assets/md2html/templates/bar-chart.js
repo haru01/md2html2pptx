@@ -41,7 +41,7 @@ function generateBarChartSlide(slide) {
       overflow: visible;
     }
     .bar {
-      fill: ${COLORS.primary};
+      /* fill is set dynamically by D3 for highlight support */
     }
     .axis-label {
       fill: ${COLORS.muted};
@@ -61,11 +61,13 @@ function generateBarChartSlide(slide) {
   const chartConfig = {
     labels: barChart.labels,
     values: barChart.values,
+    highlights: barChart.highlights || [],
     orientation: barChart.orientation || 'vertical',
     xAxisLabel: barChart.xAxisLabel || '',
     yAxisLabel: barChart.yAxisLabel || '',
     showValues: barChart.showValues || false,
     primaryColor: COLORS.primary,
+    highlightColor: '#F97316', // Orange for high contrast highlights
   };
 
   const body = `${section}    <h1>${escapeHtml(title)}</h1>
