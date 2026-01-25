@@ -41,7 +41,7 @@
  * @typedef {Object} SlideDefinition
  * @property {number} number
  * @property {string} name
- * @property {'title'|'bulletList'|'cards'|'table'|'flow'|'code'} type
+ * @property {'title'|'bulletList'|'cards'|'table'|'flow'|'code'|'leanCanvas'} type
  * @property {number} [partNumber]
  * @property {string} [mainTitle]
  * @property {string} [subtitle]
@@ -162,6 +162,7 @@ function detectSlideType(bodyLines) {
     if (!match) continue;
     const content = match[2];
 
+    if (PATTERNS.leanCanvas.test(content)) return 'leanCanvas';
     if (PATTERNS.composite.test(content)) return 'composite';
     if (PATTERNS.part.test(content)) return 'title';
 
@@ -492,6 +493,47 @@ const slideParsers = {
     const result = parseCompositeItems(lines, compositeIndex + 1, INDENT.TOP_LEVEL, 0);
     return { compositeLayout: layout, compositeItems: result.items };
   },
+
+  leanCanvas: (lines) => {
+    const sectionPatterns = [
+      { key: 'problem', pattern: PATTERNS.leanCanvasProblem, label: '課題' },
+      { key: 'solution', pattern: PATTERNS.leanCanvasSolution, label: 'ソリューション' },
+      { key: 'uvp', pattern: PATTERNS.leanCanvasUvp, label: '独自の価値提案' },
+      { key: 'advantage', pattern: PATTERNS.leanCanvasAdvantage, label: '競合優位性' },
+      { key: 'customer', pattern: PATTERNS.leanCanvasCustomer, label: '顧客セグメント' },
+      { key: 'metrics', pattern: PATTERNS.leanCanvasMetrics, label: '主要指標' },
+      { key: 'channels', pattern: PATTERNS.leanCanvasChannels, label: '顧客との接点' },
+      { key: 'cost', pattern: PATTERNS.leanCanvasCost, label: 'コスト構造' },
+      { key: 'revenue', pattern: PATTERNS.leanCanvasRevenue, label: '収益の流れ' },
+    ];
+
+    const sections = {};
+    let currentSection = null;
+
+    for (const line of lines) {
+      const match = line.match(PATTERNS.listItem);
+      if (!match) continue;
+
+      const [, spaces, content] = match;
+      const indent = spaces.length;
+
+      // Check for section headers
+      for (const { key, pattern, label } of sectionPatterns) {
+        if (pattern.test(content)) {
+          currentSection = key;
+          sections[key] = { label, items: [] };
+          break;
+        }
+      }
+
+      // Add items to current section (indent >= 4)
+      if (currentSection && indent >= INDENT.FIRST_LEVEL && sections[currentSection]) {
+        sections[currentSection].items.push(content);
+      }
+    }
+
+    return { leanCanvasSections: sections };
+  },
 };
 
 /**
@@ -517,6 +559,7 @@ const PATTERNS = {
   subtitle: /^副題[:：]\s*(.+)$/,
   layout: /^layout[:：]\s*(.+)$/i,
   composite: /^複合[:：]\s*(.+)$/,
+  leanCanvas: /^リーンキャンバス[:：]?\s*$/,
   bulletList: /^(内容|箇条書き|リスト)[:：]?\s*$/,
   code: /^コード[:：]?\s*$/,
   mermaid: /^[Mm]ermaid[:：]?\s*$/,
@@ -530,6 +573,16 @@ const PATTERNS = {
   tableSeparator: /^\|[-:\s|]+\|$/,
   listItem: /^(\s*)-\s+(.+)$/,
   codeBlockMarker: /^```/,
+  // リーンキャンバスの9セクション
+  leanCanvasProblem: /^課題[:：]?\s*$/,
+  leanCanvasSolution: /^ソリューション[:：]?\s*$/,
+  leanCanvasUvp: /^独自の価値提案[:：]?\s*$/,
+  leanCanvasAdvantage: /^競合優位性[:：]?\s*$/,
+  leanCanvasCustomer: /^顧客セグメント[:：]?\s*$/,
+  leanCanvasMetrics: /^主要指標[:：]?\s*$/,
+  leanCanvasChannels: /^(チャネル|顧客との接点)[:：]?\s*$/,
+  leanCanvasCost: /^コスト構造[:：]?\s*$/,
+  leanCanvasRevenue: /^収益の流れ[:：]?\s*$/,
 };
 
 /**

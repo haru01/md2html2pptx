@@ -1959,4 +1959,104 @@ describe('MD → PPTX 統合テスト', () => {
       expect(texts.some(t => t.includes('セルD'))).toBe(true);
     });
   });
+
+  describe('リーンキャンバススライド', () => {
+    /**
+     * リーンキャンバススライド仕様:
+     * - リーンキャンバス: で専用レイアウトを定義
+     * - 9つのセクション（課題、ソリューション、独自の価値提案、競合優位性、
+     *   顧客セグメント、主要指標、チャネル、コスト構造、収益の流れ）
+     * - セルのマージを含む特殊なグリッドレイアウト
+     */
+    let pptxPath;
+    let slideXml;
+
+    beforeAll(async () => {
+      setupTmpDir();
+      const md = fs.readFileSync(
+        path.join(FIXTURES_DIR, 'lean-canvas-slide.md'),
+        'utf-8'
+      );
+      pptxPath = await mdToPptx(md, 'lean-canvas');
+      slideXml = await getSlideXml(pptxPath, 1);
+    }, 120000);
+
+    test('PPTX ファイルが生成される', () => {
+      expect(fs.existsSync(pptxPath)).toBe(true);
+    });
+
+    test('ファイルサイズが妥当', () => {
+      const stats = fs.statSync(pptxPath);
+      expect(stats.size).toBeGreaterThan(10000);
+    });
+
+    test('セクション番号が含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('1.1'))).toBe(true);
+    });
+
+    test('タイトルが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('リーンキャンバス'))).toBe(true);
+    });
+
+    test('課題セクションが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('課題'))).toBe(true);
+      expect(texts.some(t => t.includes('既存ツールが複雑すぎる'))).toBe(true);
+    });
+
+    test('ソリューションセクションが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('ソリューション'))).toBe(true);
+      expect(texts.some(t => t.includes('シンプルなUI'))).toBe(true);
+    });
+
+    test('独自の価値提案セクションが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('独自の価値提案'))).toBe(true);
+      expect(texts.some(t => t.includes('誰でも5分で使える'))).toBe(true);
+    });
+
+    test('競合優位性セクションが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('競合優位性'))).toBe(true);
+      expect(texts.some(t => t.includes('特許技術'))).toBe(true);
+    });
+
+    test('顧客セグメントセクションが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('顧客セグメント'))).toBe(true);
+      expect(texts.some(t => t.includes('中小企業の経営者'))).toBe(true);
+    });
+
+    test('主要指標セクションが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('主要指標'))).toBe(true);
+      expect(texts.some(t => t.includes('MAU'))).toBe(true);
+    });
+
+    test('チャネルセクションが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('チャネル'))).toBe(true);
+      expect(texts.some(t => t.includes('Web広告'))).toBe(true);
+    });
+
+    test('コスト構造セクションが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('コスト構造'))).toBe(true);
+      expect(texts.some(t => t.includes('サーバー費用'))).toBe(true);
+    });
+
+    test('収益の流れセクションが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('収益の流れ'))).toBe(true);
+      expect(texts.some(t => t.includes('月額サブスク'))).toBe(true);
+    });
+
+    test('複数の図形が存在する（9セクション + タイトル）', () => {
+      const shapeCount = countShapes(slideXml);
+      expect(shapeCount).toBeGreaterThanOrEqual(10);
+    });
+  });
 });
