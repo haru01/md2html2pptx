@@ -36,10 +36,10 @@ function generateTableSlide(slide) {
     .pptx-table th,
     .pptx-table td {
       border: 1px solid ${COLORS.border};
-      padding: 12px 16px;
+      padding: 8px 12px;
       text-align: left;
-      font-size: 14px;
-      line-height: 1.4;
+      font-size: 12px;
+      line-height: 1.3;
       vertical-align: middle;
     }
     .pptx-table th p,
@@ -76,9 +76,9 @@ function generateTableSlide(slide) {
     rows: pptxRows,
     options: {
       fontFace: 'Meiryo',
-      fontSize: 14,
+      fontSize: 12,
       border: { pt: 1, color: COLORS.border.replace('#', '') },
-      colW: calculateColumnWidths(colCount),
+      colW: calculateColumnWidths(colCount, pptxRows),
       // Theme colors for PPTX styling
       headerBg: '0F172A',
       headerColor: 'FFFFFF',
@@ -115,18 +115,35 @@ ${dataRows}
 }
 
 /**
- * Calculate column widths based on number of columns
+ * Calculate column widths based on content length
  * Total width: ~8 inches (leaving margins)
  * @param {number} colCount - Number of columns
+ * @param {string[][]} rows - All rows including headers
  * @returns {number[]} Array of column widths in inches
  */
-function calculateColumnWidths(colCount) {
+function calculateColumnWidths(colCount, rows) {
   const totalWidth = 8.0;
   if (colCount <= 1) return [totalWidth];
 
-  // Equal distribution for general tables
-  const colWidth = totalWidth / colCount;
-  return Array(colCount).fill(colWidth);
+  // Calculate max character length for each column
+  const maxLengths = Array(colCount).fill(0);
+  for (const row of rows) {
+    row.forEach((cell, i) => {
+      if (i < colCount) {
+        maxLengths[i] = Math.max(maxLengths[i], String(cell).length);
+      }
+    });
+  }
+
+  // Distribute width proportionally based on content length
+  const totalLength = maxLengths.reduce((a, b) => a + b, 0);
+  if (totalLength === 0) {
+    // Fallback to equal distribution
+    const colWidth = totalWidth / colCount;
+    return Array(colCount).fill(colWidth);
+  }
+
+  return maxLengths.map(len => (len / totalLength) * totalWidth);
 }
 
 module.exports = generateTableSlide;
