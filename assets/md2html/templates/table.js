@@ -36,10 +36,10 @@ function generateTableSlide(slide) {
     .pptx-table th,
     .pptx-table td {
       border: 1px solid ${COLORS.border};
-      padding: 8px 12px;
+      padding: 6px 10px;
       text-align: left;
-      font-size: 12px;
-      line-height: 1.3;
+      font-size: 10px;
+      line-height: 1.2;
       vertical-align: middle;
     }
     .pptx-table th p,
@@ -51,7 +51,7 @@ function generateTableSlide(slide) {
       background: ${COLORS.darkBg};
       color: ${COLORS.white};
       font-weight: 700;
-      font-size: 12px;
+      font-size: 10px;
     }
     .pptx-table td:first-child {
       background: ${COLORS.headerBg};
@@ -76,7 +76,7 @@ function generateTableSlide(slide) {
     rows: pptxRows,
     options: {
       fontFace: 'Meiryo',
-      fontSize: 12,
+      fontSize: 10,
       border: { pt: 1, color: COLORS.border.replace('#', '') },
       colW: calculateColumnWidths(colCount, pptxRows),
       // Theme colors for PPTX styling
