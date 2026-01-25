@@ -4,22 +4,31 @@
 
 ## 手順
 
-1. フォルダ作成
-2. サンプルファイルをコピー
-3. package.json生成（既存の場合は依存関係をマージ）
-4. npm install 実行
-5. npx playwright install chromium 実行
-6. 完了メッセージを表示
+1. skills 側で依存関係インストール（初回のみ）
+2. フォルダ作成
+3. サンプルファイルをコピー
+4. package.json生成（scriptsのみ、dependenciesなし）
+5. 完了メッセージを表示
+
+※ 利用元プロジェクトでは npm install 不要（skills 側の node_modules を使用）
 
 ## 実行内容
 
-### 1. フォルダ作成
+### 1. skills 側で依存関係インストール（初回のみ）
+
+skills の node_modules がない場合のみ実行:
+
+```bash
+cd <skill-path> && npm install && npx playwright install chromium
+```
+
+### 2. フォルダ作成
 
 ```bash
 mkdir -p 1_mds 2_htmls 3_pptxs
 ```
 
-### 2. サンプルファイルをコピー
+### 3. サンプルファイルをコピー
 
 `1_mds/` にサンプルファイルをコピー（存在しない場合のみ）:
 
@@ -28,40 +37,27 @@ cp <skill-path>/assets/1_mds/sample.md 1_mds/sample.md
 cp <skill-path>/assets/1_mds/theme.json 1_mds/theme.json
 ```
 
-### 3. package.json生成
+### 4. package.json生成
 
 既存のpackage.jsonがない場合は新規作成。
-`dependencies` は `<skill-path>/assets/package.json` から読み取ってコピーする:
+**注意**: dependencies は含めない（skills 側の node_modules を使用）
 
 ```json
 {
   "name": "md2html2pptx-project",
   "version": "1.0.0",
   "scripts": {
-    "to_html": "NODE_PATH=$PWD/node_modules node <skill-path>/assets/to_html.js",
-    "preview": "NODE_PATH=$PWD/node_modules node <skill-path>/assets/preview.js",
-    "to_pptx": "NODE_PATH=$PWD/node_modules node <skill-path>/assets/to_pptx.js",
-    "clean_to_html_all": "rm -rf 2_htmls/* && for f in 1_mds/*.md; do npm run to_html -- \"$f\"; done"
-  },
-  "dependencies": "<skill-path>/assets/package.json の dependencies をコピー"
+    "to_html": "NODE_PATH=<skill-path>/node_modules node <skill-path>/assets/to_html.js",
+    "preview": "NODE_PATH=<skill-path>/node_modules node <skill-path>/assets/preview.js",
+    "to_pptx": "NODE_PATH=<skill-path>/node_modules node <skill-path>/assets/to_pptx.js",
+    "clean_to_html_all": "rm -rf 2_htmls/* && npm run to_html"
+  }
 }
 ```
 
-既存のpackage.jsonがある場合は、`<skill-path>/assets/package.json` の dependencies をマージする。
+既存のpackage.jsonがある場合は、scripts セクションに上記のスクリプトを追加（マージ）する。
 
-### 4. 依存関係インストール
-
-```bash
-npm install
-```
-
-### 5. Playwrightブラウザインストール
-
-```bash
-npx playwright install chromium
-```
-
-### 6. 完了メッセージ
+### 5. 完了メッセージ
 
 ```
 ✅ セットアップ完了！
@@ -72,9 +68,10 @@ npx playwright install chromium
    3_pptxs/  - 生成されたPowerPoint
 
 🚀 使い方:
-   1. /md2html2pptx to_html 1_mds/sample.md  → HTMLスライド生成
-   2. /md2html2pptx preview                  → ブラウザでプレビュー
-   3. /md2html2pptx to_pptx                  → PowerPoint生成
+   1. npm run to_html                → HTMLスライド生成（1_mds/ 以下すべて）
+   2. npm run to_html 1_mds/xxx.md   → 指定ファイルのみ変換
+   3. npm run preview                → ブラウザでプレビュー
+   4. npm run to_pptx                → PowerPoint生成
 ```
 
 ## オプション: Full Setup
@@ -103,21 +100,27 @@ cp <skill-path>/assets/to_pptx.js ./
 
 ## トラブルシューティング
 
-### Chromiumインストールエラー
+### モジュールが見つからないエラー
+
+skills 側で npm install が実行されていない可能性:
 
 ```bash
-npx playwright install chromium --with-deps
+cd <skill-path> && npm install
 ```
 
-### node_modules関連エラー
+### Playwrightエラー
+
+skills 側で Chromium がインストールされていない場合:
 
 ```bash
-rm -rf node_modules package-lock.json
-npm install
+cd <skill-path> && npx playwright install chromium
 ```
 
-### 権限エラー（macOS）
+### モジュール解決エラー
+
+NODE_PATH が正しく設定されているか確認:
 
 ```bash
-xattr -cr node_modules
+echo $NODE_PATH
+# <skill-path>/node_modules が表示されるはず
 ```
