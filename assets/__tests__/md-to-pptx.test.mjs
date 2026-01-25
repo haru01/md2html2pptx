@@ -374,11 +374,9 @@ describe('MD → PPTX 統合テスト', () => {
       expect(texts.some(t => t.includes('備考B'))).toBe(true);
     });
 
-    test('図形でテーブルが構成される（セル数分の図形）', () => {
-      const shapeCount = countShapes(slideXml);
-      // 3列 x 3行 = 9セル + タイトル + その他
-      // 実測値: 16図形
-      expect(shapeCount).toBeGreaterThanOrEqual(10);
+    test('PPTXネイティブテーブルが使用される', () => {
+      // ネイティブテーブルは <a:tbl> 要素を使用
+      expect(hasPattern(slideXml, /<a:tbl>/)).toBe(true);
     });
   });
 

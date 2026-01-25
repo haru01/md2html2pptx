@@ -10,39 +10,43 @@ const { isMermaidCode, generateCdnScript, getRequiredScripts } = require('../uti
 const { MERMAID_STYLES } = require('../utils/style-builders');
 
 /**
- * Generate HTML for composite table (div-based for html2pptx compatibility)
+ * Generate HTML for composite table (native table with data-pptx-table)
  */
 function generateCompositeTableHtml(table) {
+  const COLORS = getColors();
   if (!table || !table.headers || table.headers.length === 0) return '';
 
-  const columnCount = table.headers.length;
-  const cellWidth = Math.floor(100 / columnCount);
+  const pptxRows = [table.headers, ...table.rows];
 
-  const headerCells = table.headers
-    .map(
-      (h) =>
-        `            <div class="composite-table-cell" style="width: ${cellWidth}%;"><p>${escapeHtml(h)}</p></div>`
-    )
-    .join('\n');
+  // JSON data for PPTX native table
+  const pptxTableJson = JSON.stringify({
+    rows: pptxRows,
+    options: {
+      fontFace: 'Meiryo',
+      fontSize: 11,
+      border: { pt: 1, color: COLORS.border.replace('#', '') },
+    },
+  });
+
+  const headerCells = table.headers.map((h) => `            <th><p>${escapeHtml(h)}</p></th>`).join('\n');
 
   const dataRows = table.rows
     .map((row) => {
-      const cells = row
-        .map(
-          (cell) =>
-            `            <div class="composite-table-cell" style="width: ${cellWidth}%;"><p>${escapeHtml(cell)}</p></div>`
-        )
-        .join('\n');
-      return `          <div class="composite-table-row">\n${cells}\n          </div>`;
+      const cells = row.map((cell) => `            <td><p>${escapeHtml(cell)}</p></td>`).join('\n');
+      return `          <tr>\n${cells}\n          </tr>`;
     })
     .join('\n');
 
-  return `        <div class="composite-table">
-          <div class="composite-table-row composite-table-header">
+  return `        <table class="composite-table" data-pptx-table='${pptxTableJson}'>
+          <thead>
+          <tr>
 ${headerCells}
-          </div>
+          </tr>
+          </thead>
+          <tbody>
 ${dataRows}
-        </div>`;
+          </tbody>
+        </table>`;
 }
 
 /**
@@ -539,28 +543,44 @@ function generateGridCss(s) {
     .grid-cell-table {
       padding: ${Math.max(4, s.padding / 2)}px;
     }
-    .grid-table {
+    .grid-table,
+    .composite-table {
       width: 100%;
+      border-collapse: collapse;
     }
-    .grid-table-row {
-      display: flex;
-      width: 100%;
-    }
-    .grid-table-header-row {
-      background: ${COLORS.primary};
-    }
-    .grid-table-cell {
+    .grid-table th,
+    .grid-table td,
+    .composite-table th,
+    .composite-table td {
       padding: ${Math.max(4, s.padding / 3)}px;
       border: 1px solid ${COLORS.border};
+      text-align: left;
+      vertical-align: middle;
     }
-    .grid-table-cell p {
-      margin: 0;
-      font-size: ${Math.max(8, s.itemFontSize - 1)}px;
-      color: ${COLORS.text};
-    }
-    .grid-table-header-cell p {
+    .grid-table th,
+    .composite-table th {
+      background: ${COLORS.darkBg};
       color: ${COLORS.white};
       font-weight: 600;
+    }
+    .grid-table td,
+    .composite-table td {
+      background: ${COLORS.white};
+    }
+    .grid-table th p,
+    .grid-table td p,
+    .composite-table th p,
+    .composite-table td p {
+      margin: 0;
+      font-size: ${Math.max(8, s.itemFontSize - 1)}px;
+    }
+    .grid-table th p,
+    .composite-table th p {
+      color: ${COLORS.white};
+    }
+    .grid-table td p,
+    .composite-table td p {
+      color: ${COLORS.text};
     }
     .grid-cell-flow {
       display: flex;
@@ -669,41 +689,44 @@ ${filledCells}
 }
 
 /**
- * Generate a table cell for grid layout
+ * Generate a table cell for grid layout (native table with data-pptx-table)
  */
 function generateGridTableCell(table) {
   const COLORS = getColors();
   if (!table || !table.headers || table.headers.length === 0) return '      <div class="grid-cell"></div>';
 
-  const columnCount = table.headers.length;
-  const cellWidth = Math.floor(100 / columnCount);
+  const pptxRows = [table.headers, ...table.rows];
 
-  const headerCells = table.headers
-    .map(
-      (h) =>
-        `              <div class="grid-table-cell grid-table-header-cell" style="width: ${cellWidth}%;"><p>${escapeHtml(h)}</p></div>`
-    )
-    .join('\n');
+  // JSON data for PPTX native table
+  const pptxTableJson = JSON.stringify({
+    rows: pptxRows,
+    options: {
+      fontFace: 'Meiryo',
+      fontSize: 10,
+      border: { pt: 1, color: COLORS.border.replace('#', '') },
+    },
+  });
+
+  const headerCells = table.headers.map((h) => `              <th><p>${escapeHtml(h)}</p></th>`).join('\n');
 
   const dataRows = table.rows
     .map((row) => {
-      const cells = row
-        .map(
-          (cell) =>
-            `              <div class="grid-table-cell" style="width: ${cellWidth}%;"><p>${escapeHtml(cell)}</p></div>`
-        )
-        .join('\n');
-      return `            <div class="grid-table-row">\n${cells}\n            </div>`;
+      const cells = row.map((cell) => `              <td><p>${escapeHtml(cell)}</p></td>`).join('\n');
+      return `            <tr>\n${cells}\n            </tr>`;
     })
     .join('\n');
 
   return `      <div class="grid-cell grid-cell-table">
-          <div class="grid-table">
-            <div class="grid-table-row grid-table-header-row">
+          <table class="grid-table" data-pptx-table='${pptxTableJson}'>
+            <thead>
+            <tr>
 ${headerCells}
-            </div>
+            </tr>
+            </thead>
+            <tbody>
 ${dataRows}
-          </div>
+            </tbody>
+          </table>
       </div>`;
 }
 

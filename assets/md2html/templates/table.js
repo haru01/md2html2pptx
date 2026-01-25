@@ -1,21 +1,19 @@
 /**
  * Table slide generator
+ * Outputs an HTML table with embedded JSON data for PPTX native table conversion
  */
 
 const { getColors } = require('../theme');
 const { escapeHtml } = require('../utils/escape-html');
 
 /**
- * Generate Table Slide
+ * Generate Table Slide with PPTX native table support
  * @param {import('../types').SlideDefinition} slide
  * @returns {{style: string, body: string}}
  */
 function generateTableSlide(slide) {
   const COLORS = getColors();
   const table = slide.table || { headers: [], rows: [] };
-  const columnCount = table.headers.length;
-  const headerWidth = 180;
-  const contentWidth = Math.floor((960 - 120 - headerWidth) / (columnCount - 1));
 
   const style = `    .slide {
       background: ${COLORS.surface};
@@ -32,96 +30,95 @@ function generateTableSlide(slide) {
       font-size: 28px;
       margin: 0 0 24px 0;
     }
-    .table {
-      background: ${COLORS.white};
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: ${COLORS.cardShadow};
+    .pptx-table {
+      border-collapse: collapse;
     }
-    .table-row {
-      display: flex;
-      border-bottom: 1px solid ${COLORS.border};
-    }
-    .table-row:last-child { border-bottom: none; }
-    .table-row.header {
-      background: ${COLORS.darkBg};
-    }
-    .cell {
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-    }
-    .cell-header {
-      width: ${headerWidth}px;
-      flex-shrink: 0;
-      background: ${COLORS.headerBg};
-    }
-    .cell-content {
-      width: ${contentWidth}px;
-      flex-shrink: 0;
-    }
-    .table-row.header .cell-header { background: transparent; }
-    .table-row.header .cell p {
-      color: ${COLORS.white};
-      font-size: 14px;
-      font-weight: 600;
-      margin: 0;
-    }
-    .cell p {
+    .pptx-table th,
+    .pptx-table td {
+      border: 1px solid ${COLORS.border};
+      padding: 12px 16px;
+      text-align: left;
       font-size: 14px;
       line-height: 1.4;
+      vertical-align: middle;
+    }
+    .pptx-table th p,
+    .pptx-table td p {
       margin: 0;
+      padding: 0;
     }
-    .cell-header p {
+    .pptx-table th {
+      background: ${COLORS.darkBg};
+      color: ${COLORS.white};
+      font-weight: 700;
+      font-size: 12px;
+    }
+    .pptx-table td:first-child {
+      background: ${COLORS.headerBg};
+      font-weight: 600;
       color: ${COLORS.text};
-      font-weight: 600;
     }
-    .cell-content p { color: #475569; }
-    .highlight {
-      color: ${COLORS.primary};
-      font-weight: 600;
+    .pptx-table td {
+      background: ${COLORS.white};
+      color: ${COLORS.muted};
     }`;
 
   const section = slide.section ? `    <p class="section-num">${escapeHtml(slide.section)}</p>\n` : '';
   const title = slide.title || slide.name;
 
-  // Header row
-  const headerCells = table.headers
-    .map((h, i) => {
-      const cellClass = i === 0 ? 'cell cell-header' : 'cell cell-content';
-      return `        <div class="${cellClass}"><p>${escapeHtml(h)}</p></div>`;
-    })
-    .join('\n');
+  // Build PPTX table rows: first row is headers, rest are data rows
+  const pptxRows = [table.headers, ...table.rows];
+  const colCount = table.headers.length;
 
-  // Data rows
+  // JSON data for PPTX native table (auto-size based on content)
+  const pptxTableJson = JSON.stringify({
+    rows: pptxRows,
+    options: {
+      fontFace: 'Meiryo',
+      fontSize: 14,
+      border: { pt: 1, color: COLORS.border.replace('#', '') },
+      colW: calculateColumnWidths(colCount),
+    },
+  });
+
+  // Generate HTML table for preview
+  const headerCells = table.headers.map((h) => `        <th><p>${escapeHtml(h)}</p></th>`).join('\n');
+
   const dataRows = table.rows
     .map((row) => {
-      const cells = row
-        .map((cell, i) => {
-          const cellClass = i === 0 ? 'cell cell-header' : 'cell cell-content';
-          // Highlight last column values
-          const content =
-            i === row.length - 1 && i > 0
-              ? `<span class="highlight">${escapeHtml(cell)}</span>`
-              : escapeHtml(cell);
-          return `        <div class="${cellClass}"><p>${content}</p></div>`;
-        })
-        .join('\n');
-      return `      <div class="table-row">
-${cells}
-      </div>`;
+      const cells = row.map((cell) => `        <td><p>${escapeHtml(cell)}</p></td>`).join('\n');
+      return `      <tr>\n${cells}\n      </tr>`;
     })
     .join('\n');
 
   const body = `${section}    <h1>${escapeHtml(title)}</h1>
-    <div class="table">
-      <div class="table-row header">
+    <table class="pptx-table" data-pptx-table='${pptxTableJson}'>
+      <thead>
+      <tr>
 ${headerCells}
-      </div>
+      </tr>
+      </thead>
+      <tbody>
 ${dataRows}
-    </div>`;
+      </tbody>
+    </table>`;
 
   return { style, body };
+}
+
+/**
+ * Calculate column widths based on number of columns
+ * Total width: ~8 inches (leaving margins)
+ * @param {number} colCount - Number of columns
+ * @returns {number[]} Array of column widths in inches
+ */
+function calculateColumnWidths(colCount) {
+  const totalWidth = 8.0;
+  if (colCount <= 1) return [totalWidth];
+
+  // Equal distribution for general tables
+  const colWidth = totalWidth / colCount;
+  return Array(colCount).fill(colWidth);
 }
 
 module.exports = generateTableSlide;
