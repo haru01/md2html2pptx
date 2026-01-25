@@ -33,8 +33,8 @@ mkdir -p 1_mds 2_htmls 3_pptxs
 `1_mds/` にサンプルファイルをコピー（存在しない場合のみ）:
 
 ```bash
-cp <skill-path>/assets/1_mds/sample.md 1_mds/sample.md
 cp <skill-path>/assets/1_mds/theme.json 1_mds/theme.json
+cp <skill-path>/assets/1_mds/sample.md 1_mds/sample.md
 ```
 
 ### 4. package.json生成
@@ -47,9 +47,9 @@ cp <skill-path>/assets/1_mds/theme.json 1_mds/theme.json
   "name": "md2html2pptx-project",
   "version": "1.0.0",
   "scripts": {
-    "to_html": "NODE_PATH=<skill-path>/node_modules node <skill-path>/assets/to_html.js",
-    "preview": "NODE_PATH=<skill-path>/node_modules node <skill-path>/assets/preview.js",
-    "to_pptx": "NODE_PATH=<skill-path>/node_modules node <skill-path>/assets/to_pptx.js",
+    "to_html": "NODE_PATH=<skill-path>/node_modules node <skill-path>/assets/to_html.js --output $PWD/2_htmls",
+    "preview": "NODE_PATH=<skill-path>/node_modules node <skill-path>/assets/preview.js $PWD/2_htmls",
+    "to_pptx": "NODE_PATH=<skill-path>/node_modules node <skill-path>/assets/to_pptx.js --input $PWD/2_htmls --output $PWD/3_pptxs",
     "clean_to_html_all": "rm -rf 2_htmls/* && npm run to_html"
   }
 }
