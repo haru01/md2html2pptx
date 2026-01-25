@@ -3,12 +3,13 @@
  * Markdown to HTML スライド変換スクリプト
  *
  * 使い方:
- * 1. node to_html.js                     (1_mds/ 以下の全 .md を変換)
- * 2. node to_html.js 1_mds/sample.md     (指定ファイルのみ)
- * 3. node to_html.js 1_mds/sample.md --output 2_htmls
- * 4. node to_html.js 1_mds/sample.md --prefix slide
+ * 1. node to_html.js                           (assets/1_mds/ 以下の全 .md を変換)
+ * 2. node to_html.js --input 1_mds             (指定ディレクトリ以下の全 .md を変換)
+ * 3. node to_html.js 1_mds/sample.md           (指定ファイルのみ)
+ * 4. node to_html.js --input 1_mds --output 2_htmls
  *
  * オプション:
+ * --input, -i   入力ディレクトリ (例: 1_mds)
  * --output, -o  出力ディレクトリ (デフォルト: 2_htmls)
  * --prefix, -p  ファイル名プレフィックス (デフォルト: slide)
  * --dry-run     ファイルを書き込まずに確認
@@ -23,6 +24,7 @@ const fs = require("fs");
 function parseArgs(args) {
   const result = {
     input: null,
+    inputDir: null,
     output: "2_htmls",
     prefix: null,
     dryRun: false
@@ -33,6 +35,8 @@ function parseArgs(args) {
 
     if (arg === "--output" || arg === "-o") {
       result.output = args[++i];
+    } else if (arg === "--input" || arg === "-i") {
+      result.inputDir = args[++i];
     } else if (arg === "--prefix" || arg === "-p") {
       result.prefix = args[++i];
     } else if (arg === "--dry-run") {
@@ -66,19 +70,31 @@ async function main() {
   // 入力ファイルリストを決定
   let inputFiles = [];
   if (args.input) {
+    // 単一ファイル指定
     inputFiles = [args.input];
+  } else if (args.inputDir) {
+    // --input でディレクトリ指定
+    const mdsDir = path.isAbsolute(args.inputDir)
+      ? args.inputDir
+      : path.join(process.cwd(), args.inputDir);
+    inputFiles = getMdFilesInDir(mdsDir);
+    if (inputFiles.length === 0) {
+      console.error(`${args.inputDir}/ フォルダにMarkdownファイルが見つかりません。`);
+      process.exit(1);
+    }
+    console.log(`📂 ${args.inputDir}/ 以下の ${inputFiles.length} 個のMarkdownファイルを処理します\n`);
   } else {
-    // 引数がない場合は 1_mds/ 以下の全 .md を対象
-    // スクリプトと同じディレクトリ (assets/) にある 1_mds/ を探す
+    // 引数がない場合は assets/1_mds/ 以下の全 .md を対象
     const mdsDir = path.join(scriptDir, '1_mds');
     inputFiles = getMdFilesInDir(mdsDir);
     if (inputFiles.length === 0) {
       console.error("1_mds/ フォルダにMarkdownファイルが見つかりません。");
       console.error("");
       console.error("使い方: node to_html.js [markdown-file] [options]");
-      console.error("  引数なしの場合、1_mds/ 以下の全 .md ファイルを変換します。");
+      console.error("  引数なしの場合、assets/1_mds/ 以下の全 .md ファイルを変換します。");
       console.error("");
       console.error("オプション:");
+      console.error("  --input, -i   入力ディレクトリ (例: 1_mds)");
       console.error("  --output, -o  出力ディレクトリ (デフォルト: 2_htmls)");
       console.error("  --prefix, -p  ファイル名プレフィックス (デフォルト: slide)");
       console.error("  --dry-run     ファイルを書き込まずに確認");
@@ -87,10 +103,10 @@ async function main() {
     console.log(`📂 1_mds/ 以下の ${inputFiles.length} 個のMarkdownファイルを処理します\n`);
   }
 
-  // 出力ディレクトリはスクリプトのディレクトリを基準にする
+  // 出力ディレクトリはカレントディレクトリを基準にする
   const outputDir = path.isAbsolute(args.output)
     ? args.output
-    : path.join(scriptDir, args.output);
+    : path.join(process.cwd(), args.output);
 
   const { convertMdToHtml } = await import("./to_html_core.mjs");
 
