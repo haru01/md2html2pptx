@@ -11,6 +11,7 @@ const parseFlow = require('./flow');
 const parseCards = require('./cards');
 const parseComposite = require('./composite');
 const parseLeanCanvas = require('./lean-canvas');
+const parseJavelinBoard = require('./javelin-board');
 
 /**
  * Type-specific slide parsers (pure functions returning partial slide data)
@@ -25,6 +26,7 @@ const slideParsers = {
   cards: parseCards,
   composite: parseComposite,
   leanCanvas: parseLeanCanvas,
+  javelinBoard: parseJavelinBoard,
 };
 
 module.exports = slideParsers;

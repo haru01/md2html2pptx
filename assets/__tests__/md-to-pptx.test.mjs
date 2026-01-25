@@ -2054,4 +2054,63 @@ describe('MD → PPTX 統合テスト', () => {
       expect(shapeCount).toBeGreaterThanOrEqual(10);
     });
   });
+
+  describe('ジャベリンボードスライド', () => {
+    /**
+     * ジャベリンボードスライド仕様:
+     * - ジャベリンボード: で実験タイムラインを定義
+     * - 日付（YYYY-MM）をキーとして複数の実験を時系列で表示
+     * - 各実験に顧客の仕事、課題仮説、解決仮説、前提、検証方法、達成基準、結果、判断の8項目
+     * - PPTXネイティブテーブルとして出力（編集可能）
+     */
+    let pptxPath;
+    let slideXml;
+
+    beforeAll(async () => {
+      setupTmpDir();
+      const md = fs.readFileSync(
+        path.join(FIXTURES_DIR, 'javelin-board-slide.md'),
+        'utf-8'
+      );
+      pptxPath = await mdToPptx(md, 'javelin-board');
+      slideXml = await getSlideXml(pptxPath, 1);
+    }, 120000);
+
+    test('PPTX ファイルが生成される', () => {
+      expect(fs.existsSync(pptxPath)).toBe(true);
+    });
+
+    test('ファイルサイズが妥当', () => {
+      const stats = fs.statSync(pptxPath);
+      expect(stats.size).toBeGreaterThan(10000);
+    });
+
+    test('タイトルが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('仮説検証タイムライン'))).toBe(true);
+    });
+
+    test('2024-01のデータが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('2024-01'))).toBe(true);
+      expect(texts.some(t => t.includes('課題仮説'))).toBe(true);
+    });
+
+    test('2024-02のデータが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('2024-02'))).toBe(true);
+      expect(texts.some(t => t.includes('ピボット'))).toBe(true);
+    });
+
+    test('2024-03のデータが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('2024-03'))).toBe(true);
+      expect(texts.some(t => t.includes('フリーミアム'))).toBe(true);
+    });
+
+    test('テーブル要素が存在する', () => {
+      // pptxgenjs creates tables with a:graphicFrame containing a:tbl
+      expect(hasPattern(slideXml, /<a:tbl>/) || hasPattern(slideXml, /<a:graphicFrame>/)).toBe(true);
+    });
+  });
 });

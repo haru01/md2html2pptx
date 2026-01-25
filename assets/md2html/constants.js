@@ -32,6 +32,8 @@ const PATTERNS = {
   layout: /^layout[:：]\s*(.+)$/i,
   composite: /^複合[:：]\s*(.+)$/,
   leanCanvas: /^リーンキャンバス[:：]?\s*$/,
+  javelinBoard: /^ジャベリンボード[:：]?\s*$/,
+  javelinExperiment: /^実験(\d+)[:：]?\s*$/,
   bulletList: /^(内容|箇条書き|リスト)[:：]?\s*$/,
   code: /^コード[:：]?\s*$/,
   mermaid: /^[Mm]ermaid[:：]?\s*$/,

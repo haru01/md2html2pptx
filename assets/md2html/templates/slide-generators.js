@@ -11,6 +11,7 @@ const generateFlowSlide = require('./flow');
 const generateCodeSlide = require('./code');
 const generateCompositeSlide = require('./composite');
 const generateLeanCanvasSlide = require('./lean-canvas');
+const generateJavelinBoardSlide = require('./javelin-board');
 
 /**
  * Type-specific slide generators
@@ -26,6 +27,7 @@ const slideGenerators = {
   code: generateCodeSlide,
   composite: generateCompositeSlide,
   leanCanvas: generateLeanCanvasSlide,
+  javelinBoard: generateJavelinBoardSlide,
 };
 
 module.exports = slideGenerators;

@@ -611,6 +611,27 @@ var ExtractSlideData = (function(exports) {
 					return;
 				}
 			}
+			// Check for PPTX native table (data-pptx-table attribute)
+			if (el.hasAttribute && el.hasAttribute("data-pptx-table")) {
+				const rect$1 = el.getBoundingClientRect();
+				if (rect$1.width > 0 && rect$1.height > 0) {
+					try {
+						const tableDataStr = el.getAttribute("data-pptx-table");
+						const tableData = JSON.parse(tableDataStr);
+						elements.push({
+							type: "pptx-table",
+							tableData: tableData,
+							position: rectToXYWH(rect$1)
+						});
+						processed.add(el);
+						// Mark all descendants as processed to prevent text extraction from table cells
+						el.querySelectorAll("*").forEach((child) => processed.add(child));
+						return;
+					} catch (e) {
+						errors.push(`Failed to parse data-pptx-table JSON: ${e.message}`);
+					}
+				}
+			}
 			if (SUPPORTED_TEXT_TAGS.includes(el.tagName)) {
 				const computed$1 = window.getComputedStyle(el);
 				const hasBg = computed$1.backgroundColor && computed$1.backgroundColor !== "rgba(0, 0, 0, 0)";

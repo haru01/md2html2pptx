@@ -40,7 +40,7 @@
  * @typedef {Object} SlideDefinition
  * @property {number} number
  * @property {string} name
- * @property {'title'|'bulletList'|'cards'|'table'|'flow'|'code'|'leanCanvas'} type
+ * @property {'title'|'bulletList'|'cards'|'table'|'flow'|'code'|'leanCanvas'|'javelinBoard'} type
  * @property {number} [partNumber]
  * @property {string} [mainTitle]
  * @property {string} [subtitle]
@@ -82,6 +82,22 @@
 
 /**
  * @typedef {Object.<string, LeanCanvasSection>} LeanCanvasSections
+ */
+
+/**
+ * @typedef {Object} JavelinExperiment
+ * @property {string} label - Experiment label (e.g., "実験1")
+ * @property {string} [date] - Date of experiment
+ * @property {string} [customer] - Target customer
+ * @property {string} [assumption] - Key assumption to validate
+ * @property {string} [result] - Experiment result
+ * @property {string} [decision] - Decision (continue/pivot/stop)
+ */
+
+/**
+ * @typedef {Object} JavelinBoardData
+ * @property {string[]} headers - Table headers ["項目", "実験1", "実験2", ...]
+ * @property {string[][]} rows - Table rows [["日付", "2024-01", "2024-02"], ...]
  */
 
 // Export empty object for module compatibility

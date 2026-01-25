@@ -9,6 +9,7 @@ const { addLine } = require('./line');
 const { addShape } = require('./shape');
 const { addList } = require('./list');
 const { addText } = require('./text');
+const { addPptxTable } = require('./table');
 
 /**
  * Element type to handler function mapping
@@ -19,6 +20,7 @@ const elementHandlers = {
   line: addLine,
   shape: addShape,
   list: addList,
+  'pptx-table': addPptxTable,
 };
 
 /**
