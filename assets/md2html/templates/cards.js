@@ -29,7 +29,7 @@ function generateCardsSlide(slide) {
   const cardCount = cards.length;
   const layout = slide.layout || 'horizontal';
   const isVertical = layout === 'vertical';
-  const gap = isVertical ? 12 : 20;
+  const gap = isVertical ? 4 : 8;
   const totalGap = gap * (cardCount - 1);
   const availableWidth = 960 - 120; // 60px padding each side
   const cardWidth = isVertical ? availableWidth : Math.floor((availableWidth - totalGap) / cardCount) - 1;
