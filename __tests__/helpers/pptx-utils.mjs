@@ -9,13 +9,13 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import JSZip from 'jszip';
-import { convertMdToHtml } from '../../to_html_core.mjs';
-import { convertHtmlToPptx } from '../../to_pptx_core.mjs';
+import { convertMdToHtml } from '../../assets/to_html_core.mjs';
+import { convertHtmlToPptx } from '../../assets/to_pptx_core.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export const ASSETS_DIR = path.join(__dirname, '../..');
+export const ASSETS_DIR = path.join(__dirname, '../../assets');
 export const TMP_DIR = path.join(__dirname, '../tmp');
 
 /**
