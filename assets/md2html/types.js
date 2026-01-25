@@ -40,7 +40,7 @@
  * @typedef {Object} SlideDefinition
  * @property {number} number
  * @property {string} name
- * @property {'title'|'bulletList'|'cards'|'table'|'flow'|'code'|'leanCanvas'|'javelinBoard'} type
+ * @property {'title'|'bulletList'|'cards'|'table'|'flow'|'code'|'leanCanvas'|'javelinBoard'|'barChart'} type
  * @property {number} [partNumber]
  * @property {string} [mainTitle]
  * @property {string} [subtitle]
@@ -51,6 +51,7 @@
  * @property {TableDef} [table]
  * @property {string[]} [flowItems]
  * @property {CodeBlockDef} [codeBlock]
+ * @property {BarChartDef} [barChart]
  * @property {'horizontal'|'vertical'} [layout] - Card layout direction (default: 'horizontal')
  */
 
@@ -98,6 +99,16 @@
  * @typedef {Object} JavelinBoardData
  * @property {string[]} headers - Table headers ["項目", "実験1", "実験2", ...]
  * @property {string[][]} rows - Table rows [["日付", "2024-01", "2024-02"], ...]
+ */
+
+/**
+ * @typedef {Object} BarChartDef
+ * @property {string[]} labels - X-axis labels (categories)
+ * @property {number[]} values - Y-axis values
+ * @property {'vertical'|'horizontal'} [orientation] - Chart orientation (default: 'vertical')
+ * @property {string} [xAxisLabel] - X-axis label
+ * @property {string} [yAxisLabel] - Y-axis label
+ * @property {boolean} [showValues] - Show values on bars (default: false)
  */
 
 // Export empty object for module compatibility

@@ -39,6 +39,8 @@ const PATTERNS = {
   mermaid: /^[Mm]ermaid[:：]?\s*$/,
   table: /^テーブル[:：]?\s*$/,
   flow: /^フロー[:：]?\s*$/,
+  barChart: /^棒グラフ[:：]?\s*$/,
+  barChartOptions: /^オプション[:：]?\s*$/,
   card: /^カード(\d+)[:：]\s*(.+)$/,
   step: /^ステップ(\d+)[:：]\s*(.+)$/,
   good: /^Good[:：]\s*(.+)$/,

@@ -87,6 +87,7 @@ function detectSlideType(bodyLines) {
 
     if (PATTERNS.leanCanvas.test(content)) return 'leanCanvas';
     if (PATTERNS.javelinBoard.test(content)) return 'javelinBoard';
+    if (PATTERNS.barChart.test(content)) return 'barChart';
     if (PATTERNS.composite.test(content)) return 'composite';
     if (PATTERNS.part.test(content)) return 'title';
 

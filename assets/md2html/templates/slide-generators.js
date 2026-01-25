@@ -12,6 +12,7 @@ const generateCodeSlide = require('./code');
 const generateCompositeSlide = require('./composite');
 const generateLeanCanvasSlide = require('./lean-canvas');
 const generateJavelinBoardSlide = require('./javelin-board');
+const generateBarChartSlide = require('./bar-chart');
 
 /**
  * Type-specific slide generators
@@ -28,6 +29,7 @@ const slideGenerators = {
   composite: generateCompositeSlide,
   leanCanvas: generateLeanCanvasSlide,
   javelinBoard: generateJavelinBoardSlide,
+  barChart: generateBarChartSlide,
 };
 
 module.exports = slideGenerators;
