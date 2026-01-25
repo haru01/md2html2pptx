@@ -38,20 +38,28 @@ function addPptxTable(el, targetSlide) {
     tableOptions.rowH = options.rowH;
   }
 
+  // Get theme colors from options (with fallbacks)
+  const headerBg = options.headerBg || '0F172A';
+  const headerColor = options.headerColor || 'FFFFFF';
+  const labelBg = options.labelBg || 'F1F5F9';
+  const labelColor = options.labelColor || '0F172A';
+  const cellBg = options.cellBg || 'FFFFFF';
+  const cellColor = options.cellColor || '64748B';
+
   // Format rows for pptxgenjs
   // Each row is an array of cells, each cell can be a string or an object with text and options
   const formattedRows = rows.map((row, rowIndex) => {
     return row.map((cell, colIndex) => {
       const isHeader = rowIndex === 0;
-      const isLabelColumn = colIndex === 0;
+      const isLabelColumn = colIndex === 0 && !isHeader;
 
       const cellOptions = {
         text: cell || '',
         options: {
           bold: isHeader || isLabelColumn,
-          fill: isHeader ? 'F1F5F9' : isLabelColumn ? 'F8FAFC' : 'FFFFFF',
-          color: isHeader ? '0F172A' : '64748B',
-          fontSize: isHeader ? 9 : 10,
+          fill: isHeader ? headerBg : isLabelColumn ? labelBg : cellBg,
+          color: isHeader ? headerColor : isLabelColumn ? labelColor : cellColor,
+          fontSize: isHeader ? 12 : 14,
           valign: 'middle',
         },
       };

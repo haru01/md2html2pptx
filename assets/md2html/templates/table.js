@@ -71,6 +71,7 @@ function generateTableSlide(slide) {
   const colCount = table.headers.length;
 
   // JSON data for PPTX native table (auto-size based on content)
+  // Pass theme colors so PPTX matches preview
   const pptxTableJson = JSON.stringify({
     rows: pptxRows,
     options: {
@@ -78,6 +79,13 @@ function generateTableSlide(slide) {
       fontSize: 14,
       border: { pt: 1, color: COLORS.border.replace('#', '') },
       colW: calculateColumnWidths(colCount),
+      // Theme colors for PPTX styling
+      headerBg: '0F172A',
+      headerColor: 'FFFFFF',
+      labelBg: COLORS.headerBg.replace('#', ''),
+      labelColor: COLORS.text.replace('#', ''),
+      cellBg: 'FFFFFF',
+      cellColor: COLORS.muted.replace('#', ''),
     },
   });
 

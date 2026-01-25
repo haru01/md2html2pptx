@@ -18,13 +18,19 @@ function generateCompositeTableHtml(table) {
 
   const pptxRows = [table.headers, ...table.rows];
 
-  // JSON data for PPTX native table
+  // JSON data for PPTX native table with theme colors
   const pptxTableJson = JSON.stringify({
     rows: pptxRows,
     options: {
       fontFace: 'Meiryo',
       fontSize: 11,
       border: { pt: 1, color: COLORS.border.replace('#', '') },
+      headerBg: '0F172A',
+      headerColor: 'FFFFFF',
+      labelBg: COLORS.headerBg.replace('#', ''),
+      labelColor: COLORS.text.replace('#', ''),
+      cellBg: 'FFFFFF',
+      cellColor: COLORS.muted.replace('#', ''),
     },
   });
 
@@ -697,13 +703,19 @@ function generateGridTableCell(table) {
 
   const pptxRows = [table.headers, ...table.rows];
 
-  // JSON data for PPTX native table
+  // JSON data for PPTX native table with theme colors
   const pptxTableJson = JSON.stringify({
     rows: pptxRows,
     options: {
       fontFace: 'Meiryo',
       fontSize: 10,
       border: { pt: 1, color: COLORS.border.replace('#', '') },
+      headerBg: '0F172A',
+      headerColor: 'FFFFFF',
+      labelBg: COLORS.headerBg.replace('#', ''),
+      labelColor: COLORS.text.replace('#', ''),
+      cellBg: 'FFFFFF',
+      cellColor: COLORS.muted.replace('#', ''),
     },
   });
 
