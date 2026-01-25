@@ -22,7 +22,7 @@ Convert Markdown content to HTML slides, then to PowerPoint presentations.
 | Command | Description |
 |---------|-------------|
 | `/md2html2pptx setup` | Initial project setup (see [setup.md](scripts/setup.md)) |
-| `/md2html2pptx to_html <file>` | Generate HTML slides from markdown (see [to_html.md](scripts/to_html.md)) |
+| `/md2html2pptx to_html [file]` | Generate HTML slides from markdown (see [to_html.md](scripts/to_html.md)) |
 | `/md2html2pptx preview` | Preview slides in browser with validation (see [preview.md](scripts/preview.md)) |
 | `/md2html2pptx to_pptx [filter]` | Build PPTX from HTML slides (see [to_pptx.md](scripts/to_pptx.md)) |
 
@@ -39,7 +39,8 @@ project/
 ## Build Commands
 
 ```bash
-npm run to_html -- 1_mds/sample.md   # Markdown → HTML
+npm run to_html                       # Markdown → HTML (1_mds/ 以下すべて)
+npm run to_html -- 1_mds/sample.md   # Markdown → HTML (指定ファイル)
 npm run preview                       # Browser preview with validation
 npm run preview -- part1              # Preview filtered slides
 npm run to_pptx                       # HTML → PowerPoint (all)
@@ -63,7 +64,8 @@ Returns slide object and placeholder positions for PptxGenJS charts/tables.
 
 ## Troubleshooting
 
+skills 側で依存関係をインストール:
+
 ```bash
-npm install
-npx playwright install chromium
+cd <skill-path> && npm install && npx playwright install chromium
 ```

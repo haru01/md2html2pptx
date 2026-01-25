@@ -29,8 +29,8 @@ cp -r md2html2pptx ~/.claude/skills/
 
 これで以下が自動的に行われます:
 - フォルダ作成 (`1_mds/`, `2_htmls/`, `3_pptxs/`)
-- `package.json` 生成
-- 依存パッケージのインストール
+- `package.json` 生成（scriptsのみ）
+- skills 側で依存パッケージのインストール（初回のみ）
 
 ### 2. Markdownを書く
 
@@ -61,12 +61,13 @@ cp -r md2html2pptx ~/.claude/skills/
 ### 3. HTMLスライドを生成
 
 ```
-/md2html2pptx to_html 1_mds/example.md
+/md2html2pptx to_html
 ```
 
 内部で以下のコマンドが実行されます:
 ```bash
-npm run to_html -- 1_mds/example.md
+npm run to_html                      # 1_mds/ 以下すべて変換
+npm run to_html -- 1_mds/example.md  # 指定ファイルのみ
 ```
 
 ### 4. プレビュー
@@ -95,7 +96,7 @@ npm run preview
 | コマンド | 説明 |
 |----------|------|
 | `/md2html2pptx setup` | 初期セットアップ |
-| `/md2html2pptx to_html <file>` | MarkdownからHTMLスライドを生成 |
+| `/md2html2pptx to_html [file]` | MarkdownからHTMLスライドを生成（引数なしで全ファイル） |
 | `/md2html2pptx preview` | ブラウザでプレビュー |
 | `/md2html2pptx to_pptx [filter]` | HTMLからPowerPointを生成 |
 
