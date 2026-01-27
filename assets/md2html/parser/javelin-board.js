@@ -2,24 +2,18 @@
  * Javelin Board slide parser
  * Parses experiment timeline data into card format for timeline display
  *
- * Supports two formats:
- * 1. List-based format:
- *    - ジャベリンボード:
- *    - 2024-01:
- *      - 顧客の行動仮説: ...
- *
- * 2. Header-based format:
+ * Supports H4 header format only:
  *    ## ジャベリンボード: タイトル
  *    ### 2024-01: サブタイトル
- *      - 顧客の行動仮説: ...
+ *    #### 顧客の行動仮説:
+ *    - 値1
+ *    - 値2 (multiple values joined with newline)
  */
-
-const { PATTERNS, INDENT } = require('../constants');
 
 /**
- * Date pattern for experiment key (e.g., "2024-01:")
+ * H4 field header pattern
  */
-const DATE_KEY_PATTERN = /^(\d{4}-\d{2})[:：]?\s*$/;
+const H4_FIELD_PATTERN = /^####\s*(顧客の行動仮説|課題仮説|価値(?:or|[\/／])解決法仮説|前提|検証方法と達成基準|結果|学びと判断)[:：]?\s*$/;
 
 /**
  * Header-based date pattern (e.g., "### 2024-01: サブタイトル")
@@ -27,18 +21,24 @@ const DATE_KEY_PATTERN = /^(\d{4}-\d{2})[:：]?\s*$/;
 const HEADER_DATE_PATTERN = /^###\s*(\d{4}-\d{2})[:：]\s*(.*)$/;
 
 /**
- * Field patterns for experiment items (in display order)
- * Supports both "価値or解決法仮説" and "価値/解決法仮説" formats
+ * List item pattern
  */
-const FIELD_PATTERNS = [
-  { key: 'customerJob', pattern: /^顧客の行動仮説[:：]\s*(.+)$/, label: '顧客の行動仮説' },
-  { key: 'problemHypothesis', pattern: /^課題仮説[:：]\s*(.+)$/, label: '課題仮説' },
-  { key: 'solutionHypothesis', pattern: /^価値(?:or|[\/／])解決法仮説[:：]\s*(.+)$/, label: '価値or解決法仮説' },
-  { key: 'assumption', pattern: /^前提[:：]\s*(.+)$/, label: '前提' },
-  { key: 'methodAndCriteria', pattern: /^検証方法と達成基準[:：]\s*(.+)$/, label: '検証方法と達成基準' },
-  { key: 'result', pattern: /^結果[:：]\s*(.+)$/, label: '結果' },
-  { key: 'decision', pattern: /^学びと判断[:：]\s*(.+)$/, label: '学びと判断' },
-];
+const LIST_ITEM_PATTERN = /^\s*-\s+(.+)$/;
+
+/**
+ * Field name to key mapping
+ */
+const FIELD_NAME_TO_KEY = {
+  '顧客の行動仮説': 'customerJob',
+  '課題仮説': 'problemHypothesis',
+  '価値or解決法仮説': 'solutionHypothesis',
+  '価値/解決法仮説': 'solutionHypothesis',
+  '価値／解決法仮説': 'solutionHypothesis',
+  '前提': 'assumption',
+  '検証方法と達成基準': 'methodAndCriteria',
+  '結果': 'result',
+  '学びと判断': 'decision',
+};
 
 /**
  * Derive status from decision text
@@ -76,57 +76,59 @@ function createExperiment(label, subtitle = '') {
 
 /**
  * Parse javelin board slide
- * Converts hierarchical experiment data into table format
- * Supports both list-based and header-based formats
+ * Converts H4 header format into experiment data
  * @param {string[]} lines - Body lines
  * @returns {{javelinBoardData: import('../types').JavelinBoardData}}
  */
 function parseJavelinBoard(lines) {
   const experiments = [];
   let currentExperiment = null;
+  let currentField = null;
+  let currentValues = [];
+
+  /**
+   * Flush accumulated values to current field
+   */
+  function flushField() {
+    if (currentExperiment && currentField && currentValues.length > 0) {
+      currentExperiment[currentField] = currentValues.join('\n');
+      if (currentField === 'decision') {
+        currentExperiment.status = deriveStatus(currentExperiment.decision);
+      }
+    }
+    currentField = null;
+    currentValues = [];
+  }
 
   for (const line of lines) {
-    // Check for header-based date format: ### 2024-01: サブタイトル
+    // Check for H3 experiment header: ### 2024-01: サブタイトル
     const headerMatch = line.match(HEADER_DATE_PATTERN);
     if (headerMatch) {
+      flushField();
       currentExperiment = createExperiment(headerMatch[1], headerMatch[2]?.trim() || '');
       experiments.push(currentExperiment);
       continue;
     }
 
-    const match = line.match(PATTERNS.listItem);
-    if (!match) continue;
-
-    const [, spaces, content] = match;
-    const indent = spaces.length;
-
-    // Check for list-based date key header (e.g., "- 2024-01:")
-    const dateMatch = content.match(DATE_KEY_PATTERN);
-    if (dateMatch && indent === INDENT.TOP_LEVEL) {
-      currentExperiment = createExperiment(dateMatch[1]);
-      experiments.push(currentExperiment);
+    // Check for H4 field header: #### フィールド名:
+    const h4Match = line.match(H4_FIELD_PATTERN);
+    if (h4Match) {
+      flushField();
+      const fieldName = h4Match[1];
+      currentField = FIELD_NAME_TO_KEY[fieldName] || null;
       continue;
     }
 
-    // Parse field values within experiment
-    // For header-based format, any indentation is valid
-    // For list-based format, indent >= 4 is required
-    if (currentExperiment) {
-      for (const { key, pattern } of FIELD_PATTERNS) {
-        const fieldMatch = content.match(pattern);
-        if (fieldMatch) {
-          currentExperiment[key] = fieldMatch[1].trim();
-          // Update status when decision field is set
-          if (key === 'decision') {
-            currentExperiment.status = deriveStatus(currentExperiment.decision);
-          }
-          break;
-        }
-      }
+    // Check for list item under current field
+    const listMatch = line.match(LIST_ITEM_PATTERN);
+    if (listMatch && currentField) {
+      currentValues.push(listMatch[1].trim());
     }
   }
 
-  // Return experiments array for card-based rendering
+  // Flush final field
+  flushField();
+
   return {
     javelinBoardData: {
       experiments,

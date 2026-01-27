@@ -56,7 +56,8 @@ The parser detects slide types from markdown patterns:
 - `- テーブル:` → table
 - `- フロー:` → flow
 - `- リーンキャンバス:` → leanCanvas (9-box business model canvas)
-- `- ジャベリンボード:` → javelinBoard (hypothesis validation timeline, PPTX native table)
+- `## ジャベリンボード: タイトル` → javelinBoard (hypothesis validation timeline, PPTX native table)
+  - 変更時は `__tests__/fixtures/inputs/javelin-board-slide.md` と `1_mds/sample.md` も更新すること
 - Code fences → code
 
 ## Critical Constraints
