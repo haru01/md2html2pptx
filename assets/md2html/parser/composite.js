@@ -275,22 +275,31 @@ function parseCompositeItems(lines, startIndex, baseIndent, depth = 0) {
       continue;
     }
 
-    // Check for H3 card header (### Card Name)
+    // Check for H3 header (### Header Name)
     const h3Match = trimmed.match(PATTERNS.cardH3);
-    if (h3Match && currentItem && currentItem.type === 'cards') {
-      // Finalize current card and create a new one
-      if (currentCard) {
-        currentItem.cards.push(currentCard);
+    if (h3Match && currentItem) {
+      if (currentItem.type === 'cards') {
+        // Finalize current card and create a new one
+        if (currentCard) {
+          currentItem.cards.push(currentCard);
+        }
+        // Create new card with H3 title, inherit variant from current item
+        const variant = currentItem.currentVariant || 'normal';
+        currentCard = createCard(h3Match[1].trim(), variant);
+        // Add step number for step variant
+        if (variant === 'step') {
+          currentCard.number = currentItem.cards.filter(c => c.variant === 'step').length + 1;
+        }
+        i++;
+        continue;
+      } else if (currentItem.type === 'bulletList') {
+        // Add H3 as a top-level item with isHeading flag
+        const newContentItem = { text: h3Match[1].trim(), subItems: [], isHeading: true };
+        currentItem.items.push(newContentItem);
+        currentContentItem = newContentItem;
+        i++;
+        continue;
       }
-      // Create new card with H3 title, inherit variant from current item
-      const variant = currentItem.currentVariant || 'normal';
-      currentCard = createCard(h3Match[1].trim(), variant);
-      // Add step number for step variant
-      if (variant === 'step') {
-        currentCard.number = currentItem.cards.filter(c => c.variant === 'step').length + 1;
-      }
-      i++;
-      continue;
     }
 
     // Check indentation
@@ -353,6 +362,13 @@ function parseCompositeItems(lines, startIndex, baseIndent, depth = 0) {
       // In new H3 format, card items can be at baseIndent level (same as trigger)
       if (currentItem && currentItem.type === 'cards' && currentCard) {
         currentCard.items.push(content);
+        i++;
+        continue;
+      }
+
+      // For bulletList with H3, items at baseIndent are sub-items of the H3
+      if (currentItem && currentItem.type === 'bulletList' && currentContentItem) {
+        currentContentItem.subItems.push({ text: content, subSubItems: [] });
         i++;
         continue;
       }
