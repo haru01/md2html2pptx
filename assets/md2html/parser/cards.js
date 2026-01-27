@@ -27,18 +27,6 @@ function parseCards(lines) {
   const isMetadata = (content) =>
     PATTERNS.section.test(content) || PATTERNS.title.test(content) || PATTERNS.layout.test(content);
 
-  const parseCardHeader = (content) => {
-    const cardMatch = content.match(PATTERNS.card);
-    if (cardMatch) return { name: cardMatch[2].trim(), variant: 'normal', number: null };
-    const stepMatch = content.match(PATTERNS.step);
-    if (stepMatch) return { name: stepMatch[2].trim(), variant: 'step', number: parseInt(stepMatch[1], 10) };
-    const goodMatch = content.match(PATTERNS.good);
-    if (goodMatch) return { name: goodMatch[1].trim(), variant: 'good', number: null };
-    const badMatch = content.match(PATTERNS.bad);
-    if (badMatch) return { name: badMatch[1].trim(), variant: 'bad', number: null };
-    return null;
-  };
-
   const finalizeCard = (state) =>
     state.currentCard ? { ...state, cards: [...state.cards, state.currentCard], currentCard: null } : state;
 
@@ -48,6 +36,8 @@ function parseCards(lines) {
     inCodeBlock: false,
     codeBlockLang: '',
     codeBlockLines: [],
+    h3Mode: false, // Track if we're in H3 card mode
+    h3Variant: 'normal', // Track variant for H3 cards (normal or step)
   };
 
   const finalState = lines.reduce((state, line) => {
@@ -82,6 +72,18 @@ function parseCards(lines) {
       return { ...state, codeBlockLines: [...state.codeBlockLines, line] };
     }
 
+    // Check for H3 card header (### Card Name)
+    const h3Match = trimmed.match(PATTERNS.cardH3);
+    if (h3Match && state.h3Mode) {
+      const finalized = finalizeCard(state);
+      const newCard = createCard(h3Match[1].trim(), state.h3Variant);
+      // Add step number for step variant
+      if (state.h3Variant === 'step') {
+        newCard.number = finalized.cards.filter(c => c.variant === 'step').length + 1;
+      }
+      return { ...finalized, currentCard: newCard, h3Mode: true, h3Variant: state.h3Variant };
+    }
+
     // Parse list items
     const match = line.match(PATTERNS.listItem);
     if (!match) return state;
@@ -90,19 +92,29 @@ function parseCards(lines) {
 
     if (isMetadata(content)) return state;
 
-    // Check for card header
-    const header = parseCardHeader(content);
-    if (header) {
-      const finalized = finalizeCard(state);
-      const newCard = createCard(header.name, header.variant);
-      if (header.number !== null) {
-        newCard.number = header.number;
-      }
-      return { ...finalized, currentCard: newCard };
+    // Check for card trigger (- !カード:)
+    if (PATTERNS.cardTrigger.test(content)) {
+      return { ...state, h3Mode: true, h3Variant: 'normal' };
+    }
+
+    // Check for step trigger (- !ステップ:)
+    if (PATTERNS.step.test(content)) {
+      return { ...state, h3Mode: true, h3Variant: 'step' };
+    }
+
+    // Check for good trigger (- !Good:)
+    if (PATTERNS.good.test(content)) {
+      return { ...state, h3Mode: true, h3Variant: 'good' };
+    }
+
+    // Check for bad trigger (- !Bad:)
+    if (PATTERNS.bad.test(content)) {
+      return { ...state, h3Mode: true, h3Variant: 'bad' };
     }
 
     // Add item to current card
-    if (state.currentCard && indent >= INDENT.TOP_LEVEL) {
+    const acceptItem = state.currentCard; // H3モードが常にアクティブなため
+    if (acceptItem) {
       return {
         ...state,
         currentCard: { ...state.currentCard, items: [...state.currentCard.items, content] },

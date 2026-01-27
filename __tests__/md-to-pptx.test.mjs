@@ -2113,4 +2113,82 @@ describe('MD → PPTX 統合テスト', () => {
       expect(shapeCount).toBeGreaterThanOrEqual(4);
     });
   });
+
+  describe('カードスライド（H3形式）', () => {
+    /**
+     * カードスライド（H3形式）:
+     * - カード: でカードスライド開始
+     * - ### カード名 で個々のカードを定義
+     * - 各カードの下に項目を配置
+     */
+    let pptxPath;
+    let slideXml;
+
+    beforeAll(async () => {
+      setupTmpDir();
+      const md = fs.readFileSync(
+        path.join(FIXTURES_DIR, 'cards-h3-slide.md'),
+        'utf-8'
+      );
+      pptxPath = await mdToPptx(md, 'cards-h3');
+      slideXml = await getSlideXml(pptxPath, 1);
+    }, 120000);
+
+    test('PPTX ファイルが生成される', () => {
+      expect(fs.existsSync(pptxPath)).toBe(true);
+    });
+
+    test('ファイルサイズが妥当', () => {
+      const stats = fs.statSync(pptxPath);
+      expect(stats.size).toBeGreaterThan(10000);
+    });
+
+    test('セクション番号が含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('1.2'))).toBe(true);
+    });
+
+    test('タイトルが含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('3つの特徴'))).toBe(true);
+    });
+
+    test('カード1のタイトル（シンプル）が含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('シンプル'))).toBe(true);
+    });
+
+    test('カード1の項目が含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('Markdownで記述'))).toBe(true);
+      expect(texts.some(t => t.includes('特別な知識不要'))).toBe(true);
+    });
+
+    test('カード2のタイトル（高品質）が含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('高品質'))).toBe(true);
+    });
+
+    test('カード2の項目が含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('プロ仕様のデザイン'))).toBe(true);
+      expect(texts.some(t => t.includes('一貫したスタイル'))).toBe(true);
+    });
+
+    test('カード3のタイトル（高速）が含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('高速'))).toBe(true);
+    });
+
+    test('カード3の項目が含まれる', () => {
+      const texts = extractTexts(slideXml);
+      expect(texts.some(t => t.includes('数秒で変換完了'))).toBe(true);
+      expect(texts.some(t => t.includes('即座にプレビュー'))).toBe(true);
+    });
+
+    test('複数の図形が存在する（3カード + タイトル）', () => {
+      const shapeCount = countShapes(slideXml);
+      expect(shapeCount).toBeGreaterThanOrEqual(4);
+    });
+  });
 });

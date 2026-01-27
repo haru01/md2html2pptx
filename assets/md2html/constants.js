@@ -30,7 +30,7 @@ const PATTERNS = {
   title: /^タイトル[:：]\s*(.+)$/,
   subtitle: /^副題[:：]\s*(.+)$/,
   layout: /^layout[:：]\s*(.+)$/i,
-  composite: /^複合[:：]\s*(.+)$/,
+  composite: /^!複合[:：]\s*(.+)$/,
   leanCanvas: /^リーンキャンバス[:：]?\s*$/,
   leanCanvasHeader: /^##\s*リーンキャンバス[:：]\s*(.+)$/,
   leanCanvasSectionHeader: /^###\s*(.+?)[:：]\s*$/,
@@ -42,17 +42,19 @@ const PATTERNS = {
   customerJourneyHeader: /^##\s*カスタマージャーニー[:：]\s*(.+)$/,
   customerJourneyPhaseHeader: /^###(?!#)\s*(.+)$/,
   customerJourneySectionHeader: /^####\s*(行動|タッチポイント|ペイン|ゲイン)[:：]?\s*$/,
-  bulletList: /^(内容|箇条書き|リスト)[:：]?\s*$/,
-  code: /^コード[:：]?\s*$/,
-  mermaid: /^[Mm]ermaid[:：]?\s*$/,
-  table: /^テーブル[:：]?\s*$/,
-  flow: /^フロー[:：]?\s*$/,
-  barChart: /^棒グラフ[:：]?\s*$/,
+  bulletList: /^!(内容|箇条書き|リスト)[:：]?\s*$/,
+  code: /^!コード[:：]?\s*$/,
+  mermaid: /^![Mm]ermaid[:：]?\s*$/,
+  table: /^!テーブル[:：]?\s*$/,
+  flow: /^!フロー[:：]?\s*$/,
+  barChart: /^!棒グラフ[:：]?\s*$/,
   barChartOptions: /^オプション[:：]?\s*$/,
-  card: /^カード(\d+)[:：]\s*(.+)$/,
-  step: /^ステップ(\d+)[:：]\s*(.+)$/,
-  good: /^Good[:：]\s*(.+)$/,
-  bad: /^Bad[:：]\s*(.+)$/,
+  cardTrigger: /^!カード[:：]?\s*$/,
+  cardH3: /^###\s+(.+)$/,
+  step: /^!ステップ[:：]?\s*$/,
+  stepH3: /^###\s+(.+)$/,
+  good: /^!Good[:：]?\s*$/,
+  bad: /^!Bad[:：]?\s*$/,
   tableRow: /^\|.+\|$/,
   tableSeparator: /^\|[-:\s|]+\|$/,
   listItem: /^(\s*)-\s+(.+)$/,
@@ -87,28 +89,27 @@ const ELEMENT_TYPE_CREATORS = {
  */
 const CARD_MATCHERS = [
   {
-    pattern: PATTERNS.card,
+    pattern: PATTERNS.cardTrigger,
     variant: 'normal',
-    getName: (match) => match[2].trim(),
+    getName: () => '', // H3からタイトルを取得するため空
     shouldStartNewGroup: (cards) => cards.length > 0 && cards.every((c) => c.variant === 'step'),
   },
   {
     pattern: PATTERNS.step,
     variant: 'step',
-    getName: (match) => match[2].trim(),
-    getNumber: (match) => parseInt(match[1], 10),
+    getName: () => '', // H3からタイトルを取得するため空
     shouldStartNewGroup: (cards) => cards.some((c) => c.variant !== 'step'),
   },
   {
     pattern: PATTERNS.good,
     variant: 'good',
-    getName: (match) => match[1].trim(),
+    getName: () => '', // H3からタイトルを取得するため空
     shouldStartNewGroup: () => false,
   },
   {
     pattern: PATTERNS.bad,
     variant: 'bad',
-    getName: (match) => match[1].trim(),
+    getName: () => '', // H3からタイトルを取得するため空
     shouldStartNewGroup: () => false,
   },
 ];

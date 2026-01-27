@@ -3,7 +3,7 @@
 ---
 
 ## 3.1: シーケンス図
-- Mermaid:
+- !Mermaid:
 
 ```mermaid
 sequenceDiagram

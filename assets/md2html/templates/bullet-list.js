@@ -56,12 +56,12 @@ function generateBulletListSlide(slide) {
     }
     .sub-list {
       margin: 4px 0 0 0;
-      padding-left: 20px;
+      padding-left: 24px;
       list-style: none;
     }
     .sub-list > li {
       color: ${COLORS.muted};
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 400;
       line-height: 1.6;
       margin-bottom: 2px;
@@ -71,12 +71,12 @@ function generateBulletListSlide(slide) {
     }
     .sub-sub-list {
       margin: 2px 0 0 0;
-      padding-left: 16px;
+      padding-left: 20px;
       list-style: none;
     }
     .sub-sub-list > li {
       color: #94A3B8;
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 400;
       line-height: 1.6;
       margin-bottom: 2px;

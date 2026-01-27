@@ -32,6 +32,7 @@ function parseBulletList(lines) {
   const initialState = {
     items: [],
     active: false,
+    underH3: false, // Track if we're under an H3 heading
   };
 
   const addTopLevelItem = (items, content, isHeading = false) => [
@@ -73,8 +74,30 @@ function parseBulletList(lines) {
     if (PATTERNS.bulletList.test(content)) return { ...state, active: true };
     if (!state.active) return state;
 
+    // H3 headings are always top-level
+    if (isHeading) {
+      return { ...state, items: addTopLevelItem(state.items, content, isHeading), underH3: true };
+    }
+
+    // When under H3 heading:
+    // - indent 0 → sub-item under H3
+    // - indent 2 → sub-sub-item under last sub-item
+    // - indent 4+ → sub-sub-item under last sub-item
+    if (state.underH3) {
+      if (indent === 0) {
+        return { ...state, items: addSubItem(state.items, content) };
+      } else {
+        // indent >= 2: sub-sub-item
+        return { ...state, items: addSubSubItem(state.items, content) };
+      }
+    }
+
+    // When not under H3 (regular bullet list):
+    // - indent 0 or 2 → top-level
+    // - indent 4 → sub-item
+    // - indent 6+ → sub-sub-item
     if (indent <= INDENT.TOP_LEVEL) {
-      return { ...state, items: addTopLevelItem(state.items, content, isHeading) };
+      return { ...state, items: addTopLevelItem(state.items, content, false) };
     }
     if (indent <= INDENT.FIRST_LEVEL) {
       return { ...state, items: addSubItem(state.items, content) };

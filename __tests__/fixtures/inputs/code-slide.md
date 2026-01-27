@@ -4,6 +4,7 @@
 
 ## 1.1: TypeScriptの例
 
+- !コード:
 ```typescript
 interface User {
   name: string;

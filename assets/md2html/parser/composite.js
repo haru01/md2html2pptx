@@ -266,6 +266,15 @@ function parseCompositeItems(lines, startIndex, baseIndent, depth = 0) {
       continue;
     }
 
+    // Check for H3 card header (### Card Name)
+    const h3Match = trimmed.match(PATTERNS.cardH3);
+    if (h3Match && currentItem && currentItem.type === 'cards' && currentCard) {
+      // Update current card's name
+      currentCard.name = h3Match[1].trim();
+      i++;
+      continue;
+    }
+
     // Check indentation
     const indentMatch = line.match(PATTERNS.listItem);
     if (!indentMatch) {
@@ -322,6 +331,13 @@ function parseCompositeItems(lines, startIndex, baseIndent, depth = 0) {
         i++;
         continue;
       }
+
+      // In new H3 format, card items can be at baseIndent level (same as trigger)
+      if (currentItem && currentItem.type === 'cards' && currentCard) {
+        currentCard.items.push(content);
+        i++;
+        continue;
+      }
     }
 
     // Content at deeper levels
@@ -365,7 +381,7 @@ function parseComposite(lines) {
 
   if (!layout) return {};
 
-  const result = parseCompositeItems(lines, compositeIndex + 1, INDENT.TOP_LEVEL, 0);
+  const result = parseCompositeItems(lines, compositeIndex + 1, 0, 0);
   return { compositeLayout: layout, compositeItems: result.items };
 }
 

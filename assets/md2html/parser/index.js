@@ -112,6 +112,7 @@ function parseSlideHeader(header, index) {
 function detectSlideType(bodyLines) {
   let hasCards = false;
   let hasOtherElement = false;
+  let hasBulletListDeclaration = false;
 
   for (const line of bodyLines) {
     const match = line.match(PATTERNS.listItem);
@@ -125,11 +126,16 @@ function detectSlideType(bodyLines) {
     if (PATTERNS.composite.test(content)) return 'composite';
     if (PATTERNS.part.test(content)) return 'title';
 
+    // Check for bullet list declaration (- リスト:, - 箇条書き:, - 内容:)
+    if (PATTERNS.bulletList.test(content)) {
+      hasBulletListDeclaration = true;
+    }
+
     // Track cards and other element types at top level (indent=0)
     const indent = match[1].length;
     if (indent === 0) {
       if (
-        PATTERNS.card.test(content) ||
+        PATTERNS.cardTrigger.test(content) ||
         PATTERNS.good.test(content) ||
         PATTERNS.bad.test(content) ||
         PATTERNS.step.test(content)
@@ -148,6 +154,25 @@ function detectSlideType(bodyLines) {
       if (hasCards) return 'composite';
       return 'flow';
     }
+  }
+
+  // If bulletList declaration exists, prioritize it over cards (even with H3)
+  if (hasBulletListDeclaration) return 'bulletList';
+
+  // Check for H3 headers (used in H3 card format)
+  // Only detect as cards if card trigger exists and no bulletList declaration
+  const hasCardTrigger = bodyLines.some((l) => {
+    const match = l.match(PATTERNS.listItem);
+    if (!match) return false;
+    const content = match[2];
+    return PATTERNS.cardTrigger.test(content) ||
+           PATTERNS.good.test(content) ||
+           PATTERNS.bad.test(content) ||
+           PATTERNS.step.test(content);
+  });
+
+  if (bodyLines.some((l) => PATTERNS.cardH3.test(l.trim())) && hasCardTrigger) {
+    hasCards = true;
   }
 
   // Cards mixed with other element types → treat as composite
