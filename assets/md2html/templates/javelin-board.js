@@ -1,141 +1,197 @@
 /**
  * Javelin Board slide generator
- * Generates HTML table with data-pptx-table attribute for native PPTX table output
+ * Generates horizontal card timeline layout for experiment tracking
  */
 
 const { getColors } = require('../theme');
 const { escapeHtml } = require('../utils/escape-html');
 
 /**
+ * Status colors for card top border
+ */
+const STATUS_COLORS = {
+  continue: '#28a745', // Green - continue experimenting
+  develop: '#6f42c1', // Purple - move to development
+  pivot: '#fd7e14', // Orange - pivot direction
+  stop: '#dc3545', // Red - stop/cancel
+};
+
+/**
+ * Field labels for display (in order)
+ */
+const FIELD_LABELS = [
+  { key: 'customerJob', label: '顧客の行動仮説' },
+  { key: 'problemHypothesis', label: '課題仮説' },
+  { key: 'solutionHypothesis', label: '価値or解決法仮説' },
+  { key: 'assumption', label: '前提' },
+  { key: 'methodAndCriteria', label: '検証方法と達成基準' },
+  { key: 'result', label: '結果' },
+  { key: 'decision', label: '学びと判断' },
+];
+
+/**
+ * Calculate card dimensions based on experiment count
+ * @param {number} count - Number of experiments (1-4)
+ * @returns {{width: number, gap: number}}
+ */
+function getCardDimensions(count) {
+  const dimensions = {
+    1: { width: 880, gap: 0 },
+    2: { width: 432, gap: 16 },
+    3: { width: 285, gap: 12 },
+    4: { width: 212, gap: 10 },
+  };
+  return dimensions[Math.min(Math.max(count, 1), 4)];
+}
+
+/**
  * Generate Javelin Board Slide
- * Outputs an HTML table with embedded JSON data for PPTX native table conversion
+ * Outputs horizontal card timeline layout
  * @param {import('../types').SlideDefinition} slide
  * @returns {{style: string, body: string}}
  */
 function generateJavelinBoardSlide(slide) {
   const COLORS = getColors();
-  const tableData = slide.javelinBoardData || { headers: [], rows: [] };
+  const data = slide.javelinBoardData || { experiments: [] };
+  const experiments = data.experiments || [];
+  const count = experiments.length;
+  const { width, gap } = getCardDimensions(count);
 
-  // 340pt in PPTX ≈ 453px at 96dpi
-  const tableHeight = 453;
+  // Adjust font sizes based on card count (max 4 cards per slide)
+  const labelSize = count <= 2 ? 8 : 7;
+  const valueSize = count <= 2 ? 11 : 10;
+  const titleSize = count <= 2 ? 14 : 12;
+  const subtitleSize = count <= 2 ? 12 : 11;
+  const fieldMargin = count <= 2 ? 10 : 8;
 
   const style = `    .slide {
       background: ${COLORS.surface};
-      padding: 24px 40px 8px;
+      padding: 24px 40px 16px;
     }
     h1 {
       color: ${COLORS.text};
-      font-size: 13px;
-      margin: 0 0 2px 0;
-    }
-    .javelin-board {
-      width: 880px;
-      height: ${tableHeight}px;
-      border-collapse: collapse;
-      table-layout: fixed;
-    }
-    .javelin-board th,
-    .javelin-board td {
-      border: 1px solid ${COLORS.border};
-      padding: 6px 8px;
-      text-align: left;
-      font-size: 10px;
-      line-height: 1.3;
-      vertical-align: middle;
-    }
-    .javelin-board th p,
-    .javelin-board td p {
-      margin: 0;
-      padding: 0;
-    }
-    .javelin-board th {
-      background: ${COLORS.headerBg};
-      color: ${COLORS.text};
+      font-size: 18px;
       font-weight: 700;
-      font-size: 10px;
+      margin: 0 0 12px 0;
     }
-    .javelin-board td:first-child {
-      background: ${COLORS.headerBg};
-      width: 100px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: ${COLORS.text};
+    .timeline {
+      display: flex;
+      gap: ${gap}px;
     }
-    .javelin-board td {
+    .experiment-card {
+      width: ${width}px;
       background: ${COLORS.white};
-      color: ${COLORS.muted};
+      border-radius: 8px;
+      box-shadow: ${COLORS.cardShadow};
+      overflow: hidden;
     }
-    .javelin-board tr:last-child td {
+    .card-header {
+      padding: 12px 14px 10px;
+      border-top: 5px solid ${COLORS.primary};
+    }
+    .card-header.status-continue {
+      border-top-color: ${STATUS_COLORS.continue};
+    }
+    .card-header.status-develop {
+      border-top-color: ${STATUS_COLORS.develop};
+    }
+    .card-header.status-pivot {
+      border-top-color: ${STATUS_COLORS.pivot};
+    }
+    .card-header.status-stop {
+      border-top-color: ${STATUS_COLORS.stop};
+    }
+    .card-label {
+      color: ${COLORS.primary};
+      font-size: ${titleSize}px;
+      font-weight: 700;
+      margin: 0;
+    }
+    .card-subtitle {
+      color: ${COLORS.muted};
+      font-size: ${subtitleSize}px;
+      margin: 4px 0 0 0;
+    }
+    .card-body {
+      padding: 4px 14px 14px;
+    }
+    .field {
+      margin-bottom: ${fieldMargin}px;
+    }
+    .field:last-child {
+      margin-bottom: 0;
+    }
+    .field-label {
+      color: ${COLORS.muted};
+      font-size: ${labelSize}px;
       font-weight: 600;
+      margin: 0 0 2px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .field-value {
+      color: ${COLORS.text};
+      font-size: ${valueSize}px;
+      line-height: 1.4;
+      margin: 0;
+    }
+    .field-decision .field-value {
+      font-weight: 600;
+    }
+    .experiment-card.status-continue .card-subtitle,
+    .experiment-card.status-continue .field-decision .field-value {
+      color: ${STATUS_COLORS.continue};
+    }
+    .experiment-card.status-develop .card-subtitle,
+    .experiment-card.status-develop .field-decision .field-value {
+      color: ${STATUS_COLORS.develop};
+    }
+    .experiment-card.status-pivot .card-subtitle,
+    .experiment-card.status-pivot .field-decision .field-value {
+      color: ${STATUS_COLORS.pivot};
+    }
+    .experiment-card.status-stop .card-subtitle,
+    .experiment-card.status-stop .field-decision .field-value {
+      color: ${STATUS_COLORS.stop};
     }`;
 
   const title = slide.title || slide.name;
 
-  // Build table rows for pptxgenjs
-  // First row is headers, rest are data rows
-  const pptxRows = [tableData.headers, ...tableData.rows];
-  const rowCount = pptxRows.length;
+  const cardsHtml = experiments
+    .map((exp) => {
+      const statusClass = `status-${exp.status || 'continue'}`;
 
-  // Calculate row height: 340pt total / rowCount = height per row in inches
-  // 340pt = 4.72 inches
-  const totalHeightInches = 4.72;
-  const rowHeightInches = totalHeightInches / rowCount;
+      const fieldsHtml = FIELD_LABELS.map(({ key, label }) => {
+        const value = exp[key] || '';
+        if (!value) return '';
+        const fieldClass = key === 'decision' ? 'field field-decision' : 'field';
+        return `        <div class="${fieldClass}">
+          <p class="field-label">${escapeHtml(label)}</p>
+          <p class="field-value">${escapeHtml(value)}</p>
+        </div>`;
+      })
+        .filter(Boolean)
+        .join('\n');
 
-  // JSON data for PPTX native table
-  const pptxTableJson = JSON.stringify({
-    rows: pptxRows,
-    options: {
-      fontFace: 'Meiryo',
-      fontSize: 10,
-      border: { pt: 1, color: '363636' },
-      colW: calculateColumnWidths(tableData.headers.length),
-      rowH: Array(rowCount).fill(rowHeightInches),
-    },
-  });
+      const subtitleHtml = exp.subtitle ? `\n        <p class="card-subtitle">${escapeHtml(exp.subtitle)}</p>` : '';
 
-  // Generate HTML table for preview
-  const headerCells = tableData.headers.map((h) => `        <th><p>${escapeHtml(h)}</p></th>`).join('\n');
-
-  const dataRows = tableData.rows
-    .map((row) => {
-      const cells = row.map((cell) => `        <td><p>${escapeHtml(cell)}</p></td>`).join('\n');
-      return `      <tr>\n${cells}\n      </tr>`;
+      return `      <div class="experiment-card ${statusClass}">
+        <div class="card-header ${statusClass}">
+          <p class="card-label">${escapeHtml(exp.label)}</p>${subtitleHtml}
+        </div>
+        <div class="card-body">
+${fieldsHtml}
+        </div>
+      </div>`;
     })
     .join('\n');
 
   const body = `    <h1>${escapeHtml(title)}</h1>
-    <table class="javelin-board" data-pptx-table='${pptxTableJson.replace(/'/g, '&#39;')}'>
-      <thead>
-      <tr>
-${headerCells}
-      </tr>
-      </thead>
-      <tbody>
-${dataRows}
-      </tbody>
-    </table>`;
+    <div class="timeline">
+${cardsHtml}
+    </div>`;
 
   return { style, body };
-}
-
-/**
- * Calculate column widths based on number of columns
- * Total width: 660pt = 9.17 inches
- * @param {number} colCount - Number of columns
- * @returns {number[]} Array of column widths in inches
- */
-function calculateColumnWidths(colCount) {
-  const totalWidth = 9.17; // 660pt
-  if (colCount <= 1) return [totalWidth];
-
-  // First column (label) is narrower
-  const labelWidth = 1.2;
-  const remainingWidth = totalWidth - labelWidth;
-  const dataColWidth = remainingWidth / (colCount - 1);
-
-  return [labelWidth, ...Array(colCount - 1).fill(dataColWidth)];
 }
 
 module.exports = generateJavelinBoardSlide;

@@ -40,7 +40,7 @@ function splitBySlideHeaders(lines) {
  * Parse slide header to extract number, section, and title
  * @param {string} header
  * @param {number} index - 0-based chunk index
- * @returns {{number: number, name: string, section?: string, title?: string, partNumber?: number, mainTitle?: string}}
+ * @returns {{number: number, name: string, section?: string, title?: string, partNumber?: number, mainTitle?: string, isJavelinBoardHeader?: boolean}}
  */
 function parseSlideHeader(header, index) {
   // Check for title slide header: ## PART N:メインタイトル
@@ -53,6 +53,17 @@ function parseSlideHeader(header, index) {
       name: mainTitle,
       partNumber,
       mainTitle,
+    };
+  }
+
+  // Check for javelin board header: ## ジャベリンボード: タイトル or ## シャベリボード: タイトル
+  const javelinBoardMatch = header.match(PATTERNS.javelinBoardHeader);
+  if (javelinBoardMatch) {
+    return {
+      number: index + 1,
+      name: javelinBoardMatch[1].trim(),
+      title: javelinBoardMatch[1].trim(),
+      isJavelinBoardHeader: true,
     };
   }
 
@@ -171,6 +182,43 @@ function parseSlideMetadata(bodyLines) {
 }
 
 /**
+ * Maximum experiments per javelin board slide
+ */
+const JAVELIN_BOARD_MAX_EXPERIMENTS = 4;
+
+/**
+ * Split javelin board slide into multiple slides if experiments exceed max
+ * @param {object} slide - Slide definition with javelinBoardData
+ * @returns {object[]} - Array of slide definitions (1 or more)
+ */
+function splitJavelinBoardSlide(slide) {
+  const experiments = slide.javelinBoardData?.experiments || [];
+  if (experiments.length <= JAVELIN_BOARD_MAX_EXPERIMENTS) {
+    return [slide];
+  }
+
+  const slides = [];
+  const totalPages = Math.ceil(experiments.length / JAVELIN_BOARD_MAX_EXPERIMENTS);
+
+  for (let page = 0; page < totalPages; page++) {
+    const startIdx = page * JAVELIN_BOARD_MAX_EXPERIMENTS;
+    const pageExperiments = experiments.slice(startIdx, startIdx + JAVELIN_BOARD_MAX_EXPERIMENTS);
+    const pageTitle = `${slide.title || slide.name} (${page + 1}/${totalPages})`;
+
+    slides.push({
+      ...slide,
+      title: pageTitle,
+      name: pageTitle,
+      javelinBoardData: {
+        experiments: pageExperiments,
+      },
+    });
+  }
+
+  return slides;
+}
+
+/**
  * Parse markdown content into slide definitions
  * @param {string} markdown - Markdown content
  * @returns {import('../types').SlideDefinition[]}
@@ -179,15 +227,37 @@ function parseMarkdown(markdown) {
   const lines = markdown.split('\n');
   const chunks = splitBySlideHeaders(lines);
 
-  return chunks.map((chunk, index) => {
+  const rawSlides = chunks.map((chunk, index) => {
     const base = parseSlideHeader(chunk.header, index);
     // Title slide is determined by header pattern (## PART N:メインタイトル)
-    const type = base.partNumber !== undefined ? 'title' : detectSlideType(chunk.bodyLines);
+    // Javelin board can be determined by header pattern (## ジャベリンボード: タイトル)
+    let type;
+    if (base.partNumber !== undefined) {
+      type = 'title';
+    } else if (base.isJavelinBoardHeader) {
+      type = 'javelinBoard';
+    } else {
+      type = detectSlideType(chunk.bodyLines);
+    }
     const metadata = parseSlideMetadata(chunk.bodyLines);
     const content = slideParsers[type]?.(chunk.bodyLines, base) ?? {};
 
     return { ...base, type, ...metadata, ...content };
   });
+
+  // Split javelin board slides if needed and renumber all slides
+  const slides = rawSlides.flatMap((slide) => {
+    if (slide.type === 'javelinBoard') {
+      return splitJavelinBoardSlide(slide);
+    }
+    return [slide];
+  });
+
+  // Renumber slides after splitting
+  return slides.map((slide, index) => ({
+    ...slide,
+    number: index + 1,
+  }));
 }
 
 module.exports = { parseMarkdown };

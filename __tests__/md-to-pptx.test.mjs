@@ -2058,8 +2058,9 @@ describe('MD → PPTX 統合テスト', () => {
      * ジャベリンボードスライド仕様:
      * - ジャベリンボード: で実験タイムラインを定義
      * - 日付（YYYY-MM）をキーとして複数の実験を時系列で表示
-     * - 各実験に顧客の仕事、課題仮説、解決仮説、前提、検証方法、達成基準、結果、判断の8項目
-     * - PPTXネイティブテーブルとして出力（編集可能）
+     * - 各実験に顧客の仕事、課題仮説、解決仮説、前提、検証方法、達成基準、結果、判断の7項目
+     * - カード形式のタイムラインレイアウトとして出力
+     * - ステータス（続行/本開発へ/ピボット）に応じたトップボーダー色
      */
     let pptxPath;
     let slideXml;
@@ -2106,9 +2107,10 @@ describe('MD → PPTX 統合テスト', () => {
       expect(texts.some(t => t.includes('クローズドコミュニティ'))).toBe(true);
     });
 
-    test('テーブル要素が存在する', () => {
-      // pptxgenjs creates tables with a:graphicFrame containing a:tbl
-      expect(hasPattern(slideXml, /<a:tbl>/) || hasPattern(slideXml, /<a:graphicFrame>/)).toBe(true);
+    test('複数の図形が存在する（3カード + タイトル）', () => {
+      // カード形式のため図形が複数存在する
+      const shapeCount = countShapes(slideXml);
+      expect(shapeCount).toBeGreaterThanOrEqual(4);
     });
   });
 });
