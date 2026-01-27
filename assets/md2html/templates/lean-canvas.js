@@ -81,7 +81,7 @@ function generateLeanCanvasSlide(slide) {
     }
     .canvas-cell ul {
       margin: 0;
-      padding: 6px 8px 6px 20px;
+      padding: 8px 10px 8px 18px;
       flex: 1;
       overflow: hidden;
     }

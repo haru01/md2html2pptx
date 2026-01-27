@@ -394,6 +394,8 @@ var ExtractSlideData = (function(exports) {
 				const element = elements[i];
 				const contentRect = rectMap.get(element)?.contentRect;
 				if (!contentRect) continue;
+				// Skip overflow validation for elements inside native PPTX tables
+				if (element.closest && element.closest('[data-pptx-table]')) continue;
 				const elementDescriptor = getElementDescriptor(element);
 				const errors = getOverflowErrors(bodyOverflowRect, contentRect, elementDescriptor);
 				for (let j = i + 1; j < elements.length; j++) {
@@ -820,7 +822,9 @@ var ExtractSlideData = (function(exports) {
 				const rect$1 = el.getBoundingClientRect();
 				if (rect$1.width === 0 || rect$1.height === 0) return;
 				const items = [];
-				const ulPaddingLeftPt = pxToPoints(window.getComputedStyle(el).paddingLeft);
+				const ulComputedStyle = window.getComputedStyle(el);
+				const ulPaddingLeftPt = pxToPoints(ulComputedStyle.paddingLeft);
+				const ulPaddingTopPt = pxToPoints(ulComputedStyle.paddingTop);
 				const marginLeft = ulPaddingLeftPt * .5;
 				const textIndent = ulPaddingLeftPt * .5;
 				// Recursively process list items with indent levels
@@ -900,10 +904,14 @@ var ExtractSlideData = (function(exports) {
 					delete items[items.length - 1].options.breakLine;
 				}
 				const computed$1 = window.getComputedStyle(el);
+				const listPosition = rectToXYWH(rect$1);
+				// Adjust Y position by padding-top to match HTML rendering
+				listPosition.y += pxToInch(parseFloat(ulComputedStyle.paddingTop));
+				listPosition.h -= pxToInch(parseFloat(ulComputedStyle.paddingTop));
 				elements.push({
 					type: "list",
 					items,
-					position: rectToXYWH(rect$1),
+					position: listPosition,
 					style: {
 						fontSize: pxToPoints(computed$1.fontSize),
 						fontFace: computed$1.fontFamily.split(",")[0].replace(/['"]/g, "").trim(),
