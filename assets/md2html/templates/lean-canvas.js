@@ -32,10 +32,21 @@ function generateLeanCanvasSlide(slide) {
       background: ${COLORS.surface};
       padding: 24px 40px;
     }
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+    }
     h1 {
       color: ${COLORS.text};
       font-size: 22px;
-      margin: 0 0 8px 0;
+      margin: 0;
+    }
+    .date {
+      color: ${COLORS.muted};
+      font-size: 14px;
+      margin: 0;
     }
     .lean-canvas {
       display: grid;
@@ -51,28 +62,31 @@ function generateLeanCanvasSlide(slide) {
     }
     .canvas-cell {
       background: ${COLORS.white};
-      border: 2px solid ${COLORS.text};
-      padding: 8px 10px;
+      box-shadow: ${COLORS.cardShadow};
       overflow: hidden;
       display: flex;
       flex-direction: column;
     }
+    .cell-header {
+      background: ${COLORS.text};
+      padding: 4px 8px;
+    }
     .canvas-cell h3 {
-      color: ${COLORS.text};
-      font-size: 11px;
+      color: ${COLORS.white};
+      font-size: 10px;
       font-weight: 700;
-      margin: 0 0 6px 0;
+      margin: 0;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
     .canvas-cell ul {
       margin: 0;
-      padding-left: 14px;
+      padding: 6px 8px 6px 20px;
       flex: 1;
       overflow: hidden;
     }
     .canvas-cell li {
-      color: ${COLORS.muted};
+      color: ${COLORS.text};
       font-size: 10px;
       line-height: 1.4;
       margin-bottom: 2px;
@@ -82,7 +96,7 @@ function generateLeanCanvasSlide(slide) {
     }
     .cell-problem { grid-area: problem; }
     .cell-solution { grid-area: solution; }
-    .cell-uvp { grid-area: uvp; background: ${COLORS.headerBg}; }
+    .cell-uvp { grid-area: uvp; }
     .cell-advantage { grid-area: advantage; }
     .cell-customer { grid-area: customer; }
     .cell-metrics { grid-area: metrics; }
@@ -92,6 +106,7 @@ function generateLeanCanvasSlide(slide) {
 
   // Lean canvas does not show section number
   const title = slide.title || slide.name;
+  const date = slide.leanCanvasDate || '';
 
   // Generate cells HTML
   const cellsHtml = sectionDefs
@@ -101,7 +116,9 @@ function generateLeanCanvasSlide(slide) {
       const itemsHtml = sectionData.items.map((item) => `          <li>${escapeHtml(item)}</li>`).join('\n');
 
       return `      <div class="canvas-cell cell-${def.key}">
-        <h3>${escapeHtml(displayLabel)}</h3>
+        <div class="cell-header">
+          <h3>${escapeHtml(displayLabel)}</h3>
+        </div>
         <ul>
 ${itemsHtml}
         </ul>
@@ -109,7 +126,11 @@ ${itemsHtml}
     })
     .join('\n');
 
-  const body = `    <h1>${escapeHtml(title)}</h1>
+  const dateHtml = date ? `\n      <p class="date">${escapeHtml(date)}</p>` : '';
+
+  const body = `    <div class="header-row">
+      <h1>${escapeHtml(title)}</h1>${dateHtml}
+    </div>
     <div class="lean-canvas">
 ${cellsHtml}
     </div>`;

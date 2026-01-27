@@ -55,7 +55,8 @@ The parser detects slide types from markdown patterns:
 - `- リスト:` → bulletList
 - `- テーブル:` → table
 - `- フロー:` → flow
-- `- リーンキャンバス:` → leanCanvas (9-box business model canvas)
+- `## リーンキャンバス: タイトル` → leanCanvas (9-box business model canvas, `### セクション名:` でセクション区切り)
+  - 変更時は `__tests__/fixtures/inputs/lean-canvas-slide.md` と `1_mds/sample.md` も更新すること
 - `## ジャベリンボード: タイトル` → javelinBoard (hypothesis validation timeline, PPTX native table)
   - 変更時は `__tests__/fixtures/inputs/javelin-board-slide.md` と `1_mds/sample.md` も更新すること
 - Code fences → code

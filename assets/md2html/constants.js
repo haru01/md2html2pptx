@@ -32,6 +32,8 @@ const PATTERNS = {
   layout: /^layout[:：]\s*(.+)$/i,
   composite: /^複合[:：]\s*(.+)$/,
   leanCanvas: /^リーンキャンバス[:：]?\s*$/,
+  leanCanvasHeader: /^##\s*リーンキャンバス[:：]\s*(.+)$/,
+  leanCanvasSectionHeader: /^###\s*(.+?)[:：]\s*$/,
   javelinBoard: /^ジャベリンボード[:：]?\s*$/,
   javelinBoardHeader: /^##\s*[ジシ][ャ][ベ]リ[ンン]?ボード[:：]\s*(.+)$/,
   javelinExperimentHeader: /^###\s*(\d{4}-\d{2})[:：]\s*(.+)$/,
@@ -52,6 +54,7 @@ const PATTERNS = {
   listItem: /^(\s*)-\s+(.+)$/,
   codeBlockMarker: /^```/,
   // Lean canvas sections
+  leanCanvasDate: /^日付[:：]?\s*$/,
   leanCanvasProblem: /^課題[:：]?\s*$/,
   leanCanvasSolution: /^ソリューション[:：]?\s*$/,
   leanCanvasUvp: /^独自の価値提案[:：]?\s*$/,

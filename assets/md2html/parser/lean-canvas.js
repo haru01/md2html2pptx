@@ -2,52 +2,81 @@
  * Lean Canvas slide parser
  */
 
-const { PATTERNS, INDENT } = require('../constants');
+const { PATTERNS } = require('../constants');
+
+/**
+ * Section definitions for lean canvas
+ */
+const SECTION_DEFINITIONS = [
+  { key: 'problem', pattern: PATTERNS.leanCanvasProblem, label: '課題' },
+  { key: 'solution', pattern: PATTERNS.leanCanvasSolution, label: 'ソリューション' },
+  { key: 'uvp', pattern: PATTERNS.leanCanvasUvp, label: '独自の価値提案' },
+  { key: 'advantage', pattern: PATTERNS.leanCanvasAdvantage, label: '競合優位性' },
+  { key: 'customer', pattern: PATTERNS.leanCanvasCustomer, label: '顧客セグメント' },
+  { key: 'metrics', pattern: PATTERNS.leanCanvasMetrics, label: '主要指標' },
+  { key: 'channels', pattern: PATTERNS.leanCanvasChannels, label: 'チャネル' },
+  { key: 'cost', pattern: PATTERNS.leanCanvasCost, label: 'コスト構造' },
+  { key: 'revenue', pattern: PATTERNS.leanCanvasRevenue, label: '収益の流れ' },
+];
 
 /**
  * Parse lean canvas slide
+ * Supports new format: ### セクション名: followed by - 項目
  * @param {string[]} lines - Body lines
- * @returns {{leanCanvasSections: Object}}
+ * @returns {{leanCanvasSections: Object, leanCanvasDate?: string}}
  */
 function parseLeanCanvas(lines) {
-  const sectionPatterns = [
-    { key: 'problem', pattern: PATTERNS.leanCanvasProblem, label: '課題' },
-    { key: 'solution', pattern: PATTERNS.leanCanvasSolution, label: 'ソリューション' },
-    { key: 'uvp', pattern: PATTERNS.leanCanvasUvp, label: '独自の価値提案' },
-    { key: 'advantage', pattern: PATTERNS.leanCanvasAdvantage, label: '競合優位性' },
-    { key: 'customer', pattern: PATTERNS.leanCanvasCustomer, label: '顧客セグメント' },
-    { key: 'metrics', pattern: PATTERNS.leanCanvasMetrics, label: '主要指標' },
-    { key: 'channels', pattern: PATTERNS.leanCanvasChannels, label: 'チャネル' },
-    { key: 'cost', pattern: PATTERNS.leanCanvasCost, label: 'コスト構造' },
-    { key: 'revenue', pattern: PATTERNS.leanCanvasRevenue, label: '収益の流れ' },
-  ];
-
   const sections = {};
   let currentSection = null;
+  let date = null;
+  let isDateSection = false;
 
   for (const line of lines) {
-    const match = line.match(PATTERNS.listItem);
-    if (!match) continue;
+    // Check for ### section header (new format)
+    const headerMatch = line.match(PATTERNS.leanCanvasSectionHeader);
+    if (headerMatch) {
+      const headerContent = headerMatch[1].trim();
 
-    const [, spaces, content] = match;
-    const indent = spaces.length;
-
-    // Check for section headers
-    for (const { key, pattern, label } of sectionPatterns) {
-      if (pattern.test(content)) {
-        currentSection = key;
-        sections[key] = { label, items: [] };
-        break;
+      // Check for date section
+      if (PATTERNS.leanCanvasDate.test(headerContent)) {
+        isDateSection = true;
+        currentSection = null;
+        continue;
       }
+
+      isDateSection = false;
+      for (const { key, pattern, label } of SECTION_DEFINITIONS) {
+        if (pattern.test(headerContent)) {
+          currentSection = key;
+          sections[key] = { label, items: [] };
+          break;
+        }
+      }
+      continue;
     }
 
-    // Add items to current section (indent >= 4)
-    if (currentSection && indent >= INDENT.FIRST_LEVEL && sections[currentSection]) {
-      sections[currentSection].items.push(content);
+    // Check for list item
+    const listMatch = line.match(PATTERNS.listItem);
+    if (listMatch) {
+      const content = listMatch[2].trim();
+
+      // Date section stores first item as date
+      if (isDateSection && !date) {
+        date = content;
+        continue;
+      }
+
+      if (currentSection && sections[currentSection]) {
+        sections[currentSection].items.push(content);
+      }
     }
   }
 
-  return { leanCanvasSections: sections };
+  const result = { leanCanvasSections: sections };
+  if (date) {
+    result.leanCanvasDate = date;
+  }
+  return result;
 }
 
 module.exports = parseLeanCanvas;

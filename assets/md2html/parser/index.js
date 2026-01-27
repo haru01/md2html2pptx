@@ -67,6 +67,17 @@ function parseSlideHeader(header, index) {
     };
   }
 
+  // Check for lean canvas header: ## リーンキャンバス: タイトル
+  const leanCanvasMatch = header.match(PATTERNS.leanCanvasHeader);
+  if (leanCanvasMatch) {
+    return {
+      number: index + 1,
+      name: leanCanvasMatch[1].trim(),
+      title: leanCanvasMatch[1].trim(),
+      isLeanCanvasHeader: true,
+    };
+  }
+
   const numberedMatch = header.match(PATTERNS.slideNumbered);
   if (numberedMatch) {
     const sectionStr = numberedMatch[1];
@@ -231,11 +242,14 @@ function parseMarkdown(markdown) {
     const base = parseSlideHeader(chunk.header, index);
     // Title slide is determined by header pattern (## PART N:メインタイトル)
     // Javelin board can be determined by header pattern (## ジャベリンボード: タイトル)
+    // Lean canvas can be determined by header pattern (## リーンキャンバス: タイトル)
     let type;
     if (base.partNumber !== undefined) {
       type = 'title';
     } else if (base.isJavelinBoardHeader) {
       type = 'javelinBoard';
+    } else if (base.isLeanCanvasHeader) {
+      type = 'leanCanvas';
     } else {
       type = detectSlideType(chunk.bodyLines);
     }
