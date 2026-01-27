@@ -33,6 +33,7 @@
 /**
  * @typedef {Object} ContentItem
  * @property {string} text
+ * @property {boolean} [isHeading] - Whether this item is a heading (h3 style)
  * @property {SubItem[]} [subItems]
  */
 

@@ -39,13 +39,20 @@ function generateBulletListSlide(slide) {
     }
     .content-list > li {
       color: ${COLORS.text};
-      font-size: 24px;
+      font-size: 18px;
       font-weight: 600;
       line-height: 1.5;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
     .content-list > li:last-child {
       margin-bottom: 0;
+    }
+    .content-list > li.heading {
+      color: ${COLORS.primary};
+      font-size: 20px;
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 8px;
     }
     .sub-list {
       margin: 4px 0 0 0;
@@ -54,7 +61,7 @@ function generateBulletListSlide(slide) {
     }
     .sub-list > li {
       color: ${COLORS.muted};
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 400;
       line-height: 1.6;
       margin-bottom: 2px;
@@ -98,19 +105,20 @@ function generateBulletListSlide(slide) {
     const listClass = depth === 0 ? 'content-list' : depth === 1 ? 'sub-list' : 'sub-sub-list';
     const itemsHtml = items
       .map((item) => {
+        const itemClass = typeof item === 'object' && item.isHeading ? ' class="heading"' : '';
         if (typeof item === 'object' && item.subItems && item.subItems.length > 0) {
           const subListHtml = generateNestedList(item.subItems, depth + 1);
-          return `        <li>${escapeHtml(item.text)}\n${subListHtml}        </li>`;
+          return `        <li${itemClass}>${escapeHtml(item.text)}\n${subListHtml}        </li>`;
         } else if (typeof item === 'object' && item.subSubItems && item.subSubItems.length > 0) {
           // Handle subSubItems (third level)
           const subSubListHtml = generateNestedList(
             item.subSubItems.map((text) => ({ text })),
             depth + 1
           );
-          return `        <li>${escapeHtml(item.text)}\n${subSubListHtml}        </li>`;
+          return `        <li${itemClass}>${escapeHtml(item.text)}\n${subSubListHtml}        </li>`;
         } else {
           const text = typeof item === 'object' ? item.text : item;
-          return `        <li>${escapeHtml(text)}</li>`;
+          return `        <li${itemClass}>${escapeHtml(text)}</li>`;
         }
       })
       .join('\n');
