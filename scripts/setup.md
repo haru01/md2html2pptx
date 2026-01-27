@@ -50,7 +50,9 @@ cp <skill-path>/assets/1_mds/sample.md 1_mds/sample.md
     "to_html": "NODE_PATH=<skill-path>/node_modules node <skill-path>/assets/to_html.js --output $PWD/2_htmls",
     "preview": "NODE_PATH=<skill-path>/node_modules node <skill-path>/assets/preview.js $PWD/2_htmls",
     "to_pptx": "NODE_PATH=<skill-path>/node_modules node <skill-path>/assets/to_pptx.js --input $PWD/2_htmls --output $PWD/3_pptxs",
-    "clean_to_html_all": "rm -rf 2_htmls/* && npm run to_html"
+    "clean_to_html_all": "rm -rf 2_htmls/* && npm run to_html",
+    "build_and_open": "npm run to_html && npm run to_pptx && open ./3_pptxs/presentation.pptx"
+
   }
 }
 ```
