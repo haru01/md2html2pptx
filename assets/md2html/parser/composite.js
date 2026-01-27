@@ -39,7 +39,7 @@ function processCardMatch(result, currentItem, currentCard, saveCurrentItem) {
   let newCurrentItem = currentItem;
   if (needsNewGroup) {
     saveCurrentItem();
-    newCurrentItem = { type: 'cards', cards: [] };
+    newCurrentItem = { type: 'cards', cards: [], currentVariant: matcher.variant };
   } else if (currentCard) {
     newCurrentItem = { ...currentItem, cards: [...currentItem.cards, currentCard] };
   }
@@ -47,6 +47,11 @@ function processCardMatch(result, currentItem, currentCard, saveCurrentItem) {
   const newCard = createCard(matcher.getName(match), matcher.variant);
   if (matcher.getNumber) {
     newCard.number = matcher.getNumber(match);
+  }
+
+  // Update currentVariant for subsequent H3 headers
+  if (newCurrentItem.type === 'cards') {
+    newCurrentItem.currentVariant = matcher.variant;
   }
 
   return { currentItem: newCurrentItem, currentCard: newCard };
@@ -74,6 +79,10 @@ function finalizeCompositeItem(item, currentCard, items) {
       if (currentCard) {
         item.cards.push(currentCard);
         card = null;
+      }
+      // Filter out empty cards (no name and no items)
+      if (item.cards) {
+        item.cards = item.cards.filter(c => c.name || (c.items && c.items.length > 0));
       }
       if (item.cards && item.cards.length > 0) {
         items.push(item);
@@ -268,9 +277,18 @@ function parseCompositeItems(lines, startIndex, baseIndent, depth = 0) {
 
     // Check for H3 card header (### Card Name)
     const h3Match = trimmed.match(PATTERNS.cardH3);
-    if (h3Match && currentItem && currentItem.type === 'cards' && currentCard) {
-      // Update current card's name
-      currentCard.name = h3Match[1].trim();
+    if (h3Match && currentItem && currentItem.type === 'cards') {
+      // Finalize current card and create a new one
+      if (currentCard) {
+        currentItem.cards.push(currentCard);
+      }
+      // Create new card with H3 title, inherit variant from current item
+      const variant = currentItem.currentVariant || 'normal';
+      currentCard = createCard(h3Match[1].trim(), variant);
+      // Add step number for step variant
+      if (variant === 'step') {
+        currentCard.number = currentItem.cards.filter(c => c.variant === 'step').length + 1;
+      }
       i++;
       continue;
     }
