@@ -591,6 +591,106 @@ var ExtractSlideData = (function(exports) {
 				processed.add(el);
 				return;
 			}
+			// Handle Lean Canvas cells - extract text into shape with integrated text
+			if (el.classList && el.classList.contains("canvas-cell")) {
+				const rect$1 = el.getBoundingClientRect();
+				if (rect$1.width > 0 && rect$1.height > 0) {
+					const computed$1 = window.getComputedStyle(el);
+					const shadowData = parseBoxShadow(computed$1.boxShadow);
+					const shadow = shadowData ? { ...shadowData, type: "outer" } : null;
+
+					// Get the header element and its computed style
+					const cellHeader = el.querySelector(".cell-header");
+					const headerH3 = el.querySelector(".cell-header h3");
+					const listItems = el.querySelectorAll("ul li");
+
+					// Build text runs array for shape
+					const textRuns = [];
+
+					// Add header text run
+					if (headerH3) {
+						const headerComputed = window.getComputedStyle(headerH3);
+						const headerText = headerH3.textContent?.trim() || "";
+						if (headerText) {
+							// Use theme text color for header (not the original white-on-dark color)
+							const textColor = getComputedStyle(document.documentElement).getPropertyValue("--theme-text").trim() || "#0F172A";
+							textRuns.push({
+								text: headerText,
+								options: {
+									fontSize: pxToPoints(headerComputed.fontSize),
+									fontFace: headerComputed.fontFamily.split(",")[0].replace(/['"]/g, "").trim(),
+									color: textColor.replace("#", ""),
+									bold: true,
+									breakLine: true
+								}
+							});
+						}
+						processed.add(headerH3);
+					}
+					if (cellHeader) {
+						processed.add(cellHeader);
+					}
+
+					// Add list items as text runs with checkmarks
+					const primaryColor = getComputedStyle(document.documentElement).getPropertyValue("--theme-primary").trim() || "#0891B2";
+					const checkmarkColor = primaryColor.replace("#", "");
+
+					listItems.forEach((li, index) => {
+						const liComputed = window.getComputedStyle(li);
+						const liText = li.textContent?.trim() || "";
+						if (liText) {
+							// Add checkmark
+							textRuns.push({
+								text: "✓ ",
+								options: {
+									fontSize: pxToPoints(liComputed.fontSize),
+									fontFace: liComputed.fontFamily.split(",")[0].replace(/['"]/g, "").trim(),
+									color: checkmarkColor,
+									breakLine: false
+								}
+							});
+							// Add item text
+							textRuns.push({
+								text: liText,
+								options: {
+									fontSize: pxToPoints(liComputed.fontSize),
+									fontFace: liComputed.fontFamily.split(",")[0].replace(/['"]/g, "").trim(),
+									color: rgbToHex(liComputed.color),
+									breakLine: index < listItems.length - 1
+								}
+							});
+						}
+						processed.add(li);
+					});
+
+					// Mark ul as processed
+					const ul = el.querySelector("ul");
+					if (ul) processed.add(ul);
+
+					// Create shape with integrated text
+					elements.push({
+						type: "shape",
+						text: textRuns,
+						position: rectToXYWH(rect$1),
+						shape: {
+							fill: rgbToHex(computed$1.backgroundColor),
+							transparency: extractAlpha(computed$1.backgroundColor),
+							rectRadius: 0,
+							shadow,
+							line: {
+								color: checkmarkColor,
+								width: 1.5
+							}
+						},
+						style: {
+							valign: "top",
+							margin: [6, 6, 6, 6]
+						}
+					});
+					processed.add(el);
+					return;
+				}
+			}
 			if (el.tagName.toUpperCase() === "SVG" || el.tagName.toUpperCase() === "CANVAS") {
 				const rect$1 = el.getBoundingClientRect();
 				if (rect$1.width > 0 && rect$1.height > 0) {

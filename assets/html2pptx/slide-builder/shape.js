@@ -37,6 +37,12 @@ function addShape(el, targetSlide) {
 
   if (el.shape.shadow) shapeOptions.shadow = el.shape.shadow;
 
+  // Add text formatting options if style is provided (e.g., for Lean Canvas cells)
+  if (el.style) {
+    if (el.style.valign) shapeOptions.valign = el.style.valign;
+    if (el.style.margin) shapeOptions.margin = el.style.margin;
+  }
+
   targetSlide.addText(el.text || '', shapeOptions);
 }
 
