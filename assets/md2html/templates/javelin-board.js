@@ -58,8 +58,9 @@ function generateJavelinBoardSlide(slide) {
   const { width, gap } = getCardDimensions(count);
 
   // Adjust font sizes based on card count (max 4 cards per slide)
+  // Note: PPTX conversion uses PT_PER_PX = 0.75, so 10.67px ≈ 8pt
   const labelSize = count <= 2 ? 8 : 7;
-  const valueSize = count <= 2 ? 11 : 10;
+  const valueSize = 10.67; // 8pt in PPTX (10.67 * 0.75 = 8)
   const titleSize = count <= 2 ? 14 : 12;
   const subtitleSize = count <= 2 ? 12 : 11;
   const fieldMargin = count <= 2 ? 10 : 8;
