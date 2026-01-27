@@ -10,6 +10,7 @@ import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
 const pptxgen = require('pptxgenjs');
+const { lockShapesInPptx, detectLeanCanvasSlides } = require('./html2pptx/postprocess/lock-shapes.js');
 
 /**
  * パス解決ユーティリティ
