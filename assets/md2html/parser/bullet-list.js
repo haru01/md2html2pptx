@@ -73,10 +73,10 @@ function parseBulletList(lines) {
     if (PATTERNS.bulletList.test(content)) return { ...state, active: true };
     if (!state.active) return state;
 
-    if (indent < INDENT.TOP_LEVEL) {
+    if (indent <= INDENT.TOP_LEVEL) {
       return { ...state, items: addTopLevelItem(state.items, content, isHeading) };
     }
-    if (indent < INDENT.FIRST_LEVEL) {
+    if (indent <= INDENT.FIRST_LEVEL) {
       return { ...state, items: addSubItem(state.items, content) };
     }
     return { ...state, items: addSubSubItem(state.items, content) };
