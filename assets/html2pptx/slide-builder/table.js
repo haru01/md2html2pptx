@@ -46,20 +46,50 @@ function addPptxTable(el, targetSlide) {
   const cellBg = options.cellBg || 'FFFFFF';
   const cellColor = options.cellColor || '64748B';
 
+  // Get row-specific styling if provided (for customer journey, etc.)
+  const rowStyles = options.rowStyles || [];
+
+  // Get font sizes from options (with fallbacks)
+  const baseFontSize = options.fontSize || 10;
+  const headerLabelFontSize = options.headerLabelFontSize || baseFontSize + 2;
+  const phaseFontSize = options.phaseFontSize || baseFontSize + 1;
+  const labelFontSize = options.labelFontSize || baseFontSize;
+
   // Format rows for pptxgenjs
   // Each row is an array of cells, each cell can be a string or an object with text and options
   const formattedRows = rows.map((row, rowIndex) => {
     return row.map((cell, colIndex) => {
       const isHeader = rowIndex === 0;
       const isLabelColumn = colIndex === 0 && !isHeader;
+      const dataRowIndex = rowIndex - 1; // Index into rowStyles (0-based, excluding header)
+      const rowStyle = !isHeader && rowStyles[dataRowIndex] ? rowStyles[dataRowIndex] : null;
+
+      // Determine fill and color based on row type
+      let fill, textColor, fontSize;
+
+      if (isHeader) {
+        fill = headerBg;
+        textColor = headerColor;
+        fontSize = colIndex === 0 ? headerLabelFontSize : phaseFontSize;
+      } else if (isLabelColumn) {
+        // Label column uses row-specific colors if available
+        fill = rowStyle ? rowStyle.bg : labelBg;
+        textColor = rowStyle ? rowStyle.color : labelColor;
+        fontSize = labelFontSize;
+      } else {
+        // Data cells use row-specific colors if available
+        fill = rowStyle ? rowStyle.bg : cellBg;
+        textColor = rowStyle ? rowStyle.color : cellColor;
+        fontSize = baseFontSize;
+      }
 
       const cellOptions = {
         text: cell || '',
         options: {
           bold: isHeader || isLabelColumn,
-          fill: isHeader ? headerBg : isLabelColumn ? labelBg : cellBg,
-          color: isHeader ? headerColor : isLabelColumn ? labelColor : cellColor,
-          fontSize: isHeader ? 12 : 14,
+          fill,
+          color: textColor,
+          fontSize,
           valign: 'middle',
         },
       };

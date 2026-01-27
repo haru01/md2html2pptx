@@ -78,6 +78,17 @@ function parseSlideHeader(header, index) {
     };
   }
 
+  // Check for customer journey header: ## カスタマージャーニー: タイトル
+  const customerJourneyMatch = header.match(PATTERNS.customerJourneyHeader);
+  if (customerJourneyMatch) {
+    return {
+      number: index + 1,
+      name: customerJourneyMatch[1].trim(),
+      title: customerJourneyMatch[1].trim(),
+      isCustomerJourneyHeader: true,
+    };
+  }
+
   const numberedMatch = header.match(PATTERNS.slideNumbered);
   if (numberedMatch) {
     const sectionStr = numberedMatch[1];
@@ -109,6 +120,7 @@ function detectSlideType(bodyLines) {
 
     if (PATTERNS.leanCanvas.test(content)) return 'leanCanvas';
     if (PATTERNS.javelinBoard.test(content)) return 'javelinBoard';
+    if (PATTERNS.customerJourney.test(content)) return 'customerJourney';
     if (PATTERNS.barChart.test(content)) return 'barChart';
     if (PATTERNS.composite.test(content)) return 'composite';
     if (PATTERNS.part.test(content)) return 'title';
@@ -198,6 +210,11 @@ function parseSlideMetadata(bodyLines) {
 const JAVELIN_BOARD_MAX_EXPERIMENTS = 4;
 
 /**
+ * Maximum phases per customer journey slide
+ */
+const CUSTOMER_JOURNEY_MAX_PHASES = 6;
+
+/**
  * Split javelin board slide into multiple slides if experiments exceed max
  * @param {object} slide - Slide definition with javelinBoardData
  * @returns {object[]} - Array of slide definitions (1 or more)
@@ -250,6 +267,8 @@ function parseMarkdown(markdown) {
       type = 'javelinBoard';
     } else if (base.isLeanCanvasHeader) {
       type = 'leanCanvas';
+    } else if (base.isCustomerJourneyHeader) {
+      type = 'customerJourney';
     } else {
       type = detectSlideType(chunk.bodyLines);
     }
@@ -259,10 +278,13 @@ function parseMarkdown(markdown) {
     return { ...base, type, ...metadata, ...content };
   });
 
-  // Split javelin board slides if needed and renumber all slides
+  // Split javelin board and customer journey slides if needed and renumber all slides
   const slides = rawSlides.flatMap((slide) => {
     if (slide.type === 'javelinBoard') {
       return splitJavelinBoardSlide(slide);
+    }
+    if (slide.type === 'customerJourney') {
+      return splitCustomerJourneySlide(slide);
     }
     return [slide];
   });
@@ -272,6 +294,44 @@ function parseMarkdown(markdown) {
     ...slide,
     number: index + 1,
   }));
+}
+
+/**
+ * Split customer journey slide into multiple slides if phases exceed max
+ * @param {object} slide - Slide definition with customerJourneyData
+ * @returns {object[]} - Array of slide definitions (1 or more)
+ */
+function splitCustomerJourneySlide(slide) {
+  const phases = slide.customerJourneyData?.phases || [];
+  if (phases.length <= CUSTOMER_JOURNEY_MAX_PHASES) {
+    return [slide];
+  }
+
+  const slides = [];
+  const totalPages = Math.ceil(phases.length / CUSTOMER_JOURNEY_MAX_PHASES);
+
+  for (let page = 0; page < totalPages; page++) {
+    const startIdx = page * CUSTOMER_JOURNEY_MAX_PHASES;
+    const endIdx = startIdx + CUSTOMER_JOURNEY_MAX_PHASES;
+    const pagePhases = phases.slice(startIdx, endIdx);
+    const pageRows = slide.customerJourneyData.rows.map((row) => ({
+      label: row.label,
+      cells: row.cells.slice(startIdx, endIdx),
+    }));
+    const pageTitle = `${slide.title || slide.name} (${page + 1}/${totalPages})`;
+
+    slides.push({
+      ...slide,
+      title: pageTitle,
+      name: pageTitle,
+      customerJourneyData: {
+        phases: pagePhases,
+        rows: pageRows,
+      },
+    });
+  }
+
+  return slides;
 }
 
 module.exports = { parseMarkdown };

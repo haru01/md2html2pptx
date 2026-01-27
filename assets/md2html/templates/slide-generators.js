@@ -13,6 +13,7 @@ const generateCompositeSlide = require('./composite');
 const generateLeanCanvasSlide = require('./lean-canvas');
 const generateJavelinBoardSlide = require('./javelin-board');
 const generateBarChartSlide = require('./bar-chart');
+const generateCustomerJourneySlide = require('./customer-journey');
 
 /**
  * Type-specific slide generators
@@ -30,6 +31,7 @@ const slideGenerators = {
   leanCanvas: generateLeanCanvasSlide,
   javelinBoard: generateJavelinBoardSlide,
   barChart: generateBarChartSlide,
+  customerJourney: generateCustomerJourneySlide,
 };
 
 module.exports = slideGenerators;

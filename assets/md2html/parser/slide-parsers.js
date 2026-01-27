@@ -13,6 +13,7 @@ const parseComposite = require('./composite');
 const parseLeanCanvas = require('./lean-canvas');
 const parseJavelinBoard = require('./javelin-board');
 const parseBarChart = require('./bar-chart');
+const parseCustomerJourney = require('./customer-journey');
 
 /**
  * Type-specific slide parsers (pure functions returning partial slide data)
@@ -29,6 +30,7 @@ const slideParsers = {
   leanCanvas: parseLeanCanvas,
   javelinBoard: parseJavelinBoard,
   barChart: parseBarChart,
+  customerJourney: parseCustomerJourney,
 };
 
 module.exports = slideParsers;
