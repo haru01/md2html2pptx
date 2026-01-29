@@ -945,49 +945,22 @@ var ExtractSlideData = (function(exports) {
 							const liComputed = window.getComputedStyle(li);
 							const cleanText = liText.replace(/^[•\-*▪▸]\s*/, "");
 
-							if (indentLevel === 0) {
-								// Top level: add colored checkmark as separate text run, then content
-								// Get primary color from CSS variable or use default
-								const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-primary').trim() || '#0891B2';
-								const checkmarkColor = primaryColor.replace('#', '');
-								items.push({
-									text: '✓ ',
-									options: {
-										fontSize: pxToPoints(liComputed.fontSize),
-										fontFace: liComputed.fontFamily.split(",")[0].replace(/['"]/g, "").trim(),
-										color: checkmarkColor,
-										bullet: false,
-										breakLine: false
-									}
-								});
-								items.push({
-									text: cleanText,
-									options: {
-										fontSize: pxToPoints(liComputed.fontSize),
-										fontFace: liComputed.fontFamily.split(",")[0].replace(/['"]/g, "").trim(),
-										color: rgbToHex(liComputed.color),
-										bullet: false,
-										indentLevel: indentLevel,
-										breakLine: true,
-										lineSpacingMultiple: 1.5
-									}
-								});
-							} else {
-								// Nested levels: no bullet
-								const run = {
-									text: cleanText,
-									options: {
-										fontSize: pxToPoints(liComputed.fontSize),
-										fontFace: liComputed.fontFamily.split(",")[0].replace(/['"]/g, "").trim(),
-										color: rgbToHex(liComputed.color),
-										bullet: false,
-										indentLevel: indentLevel,
-										breakLine: true,
-										lineSpacingMultiple: 1.5
-									}
-								};
-								items.push(run);
-							}
+							// Unified processing for all indent levels (no checkmark)
+							const isBold = liComputed.fontWeight === "bold" || parseInt(liComputed.fontWeight) >= 600;
+							const indentSpaces = "    ".repeat(indentLevel); // 4 spaces per indent level
+							items.push({
+								text: indentSpaces + cleanText,
+								options: {
+									fontSize: pxToPoints(liComputed.fontSize),
+									fontFace: liComputed.fontFamily.split(",")[0].replace(/['"]/g, "").trim(),
+									color: rgbToHex(liComputed.color),
+									bold: isBold,
+									bullet: false,
+									indentLevel: indentLevel,
+									breakLine: true,
+									lineSpacingMultiple: 1.5
+								}
+							});
 						}
 						// Process nested lists
 						const nestedLists = Array.from(li.children).filter(child => child.tagName === "UL" || child.tagName === "OL");
